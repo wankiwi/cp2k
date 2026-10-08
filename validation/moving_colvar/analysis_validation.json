@@ -1,0 +1,41 @@
+{
+  "status": "PASS",
+  "checks": [
+    {
+      "case": "growth_0p00025_A_per_fs",
+      "variant": "master",
+      "native_rows": 10000,
+      "force_exact": true
+    },
+    {
+      "case": "growth_0p00025_A_per_fs",
+      "variant": "fixed",
+      "native_rows": 10000,
+      "force_exact": true
+    },
+    {
+      "case": "growth_0p0005_A_per_fs",
+      "variant": "master",
+      "native_rows": 5000,
+      "force_exact": true
+    },
+    {
+      "case": "growth_0p0005_A_per_fs",
+      "variant": "fixed",
+      "native_rows": 5000,
+      "force_exact": true
+    },
+    {
+      "case": "growth_0p001_A_per_fs",
+      "variant": "master",
+      "native_rows": 2500,
+      "force_exact": true
+    },
+    {
+      "case": "growth_0p001_A_per_fs",
+      "variant": "fixed",
+      "native_rows": 2500,
+      "force_exact": true
+    }
+  ]
+}
