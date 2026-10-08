@@ -85,6 +85,7 @@ MODULE topology_types
       INTEGER                                       :: nconst_colv = -1
       INTEGER, POINTER                              :: const_colv_mol(:) => NULL()
       CHARACTER(LEN=default_string_length), POINTER :: const_colv_molname(:) => NULL()
+      CHARACTER(LEN=default_string_length), POINTER :: const_colv_unit(:) => NULL()
       REAL(KIND=dp), POINTER                        :: const_colv_target(:) => NULL()
       REAL(KIND=dp), POINTER                        :: const_colv_target_growth(:) => NULL()
       TYPE(colvar_p_type), POINTER, DIMENSION(:)    :: colvar_set => NULL()
@@ -334,6 +335,7 @@ CONTAINS
       NULLIFY (constraint_info%colvar_set)
       NULLIFY (constraint_info%const_colv_mol)
       NULLIFY (constraint_info%const_colv_molname)
+      NULLIFY (constraint_info%const_colv_unit)
       NULLIFY (constraint_info%const_colv_target)
       NULLIFY (constraint_info%const_colv_target_growth)
       NULLIFY (constraint_info%colv_intermolecular)
@@ -610,6 +612,9 @@ CONTAINS
       END IF
       IF (ASSOCIATED(constraint_info%const_colv_molname)) THEN
          DEALLOCATE (constraint_info%const_colv_molname)
+      END IF
+      IF (ASSOCIATED(constraint_info%const_colv_unit)) THEN
+         DEALLOCATE (constraint_info%const_colv_unit)
       END IF
       IF (ASSOCIATED(constraint_info%const_colv_target)) THEN
          DEALLOCATE (constraint_info%const_colv_target)

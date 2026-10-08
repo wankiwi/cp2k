@@ -1193,6 +1193,8 @@ CONTAINS
       CALL section_vals_remove_values(section_to_delete)
       section_to_delete => section_vals_get_subs_vals(motion_section, "CONSTRAINT%COLVAR_RESTART")
       CALL section_vals_remove_values(section_to_delete)
+      section_to_delete => section_vals_get_subs_vals(motion_section, "CONSTRAINT%BLUE_MOON_RESTART")
+      CALL section_vals_remove_values(section_to_delete)
       ! Free energies restarts
       section_to_delete => section_vals_get_subs_vals(motion_section, "FREE_ENERGY%METADYN%SPAWNED_HILLS_POS")
       CALL section_vals_remove_values(section_to_delete)

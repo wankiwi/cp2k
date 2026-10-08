@@ -31,9 +31,10 @@ MODULE constraint
                                               shake_roll_4x6_ext,&
                                               shake_roll_4x6_int
    USE constraint_clv,                  ONLY: &
-        rattle_colv_ext, rattle_colv_int, rattle_roll_colv_ext, rattle_roll_colv_int, &
-        shake_colv_ext, shake_colv_int, shake_roll_colv_ext, shake_roll_colv_int, &
-        shake_update_colv_ext, shake_update_colv_int
+        check_colv_int, rattle_colv_ext, rattle_colv_int, rattle_roll_colv_ext, &
+        rattle_roll_colv_int, shake_colv_ext, shake_colv_int, shake_roll_colv_ext, &
+        shake_roll_colv_int, shake_update_colv_ext, shake_update_colv_low, &
+        shake_update_colv_targets
    USE constraint_util,                 ONLY: check_tol,&
                                               get_roll_matrix,&
                                               restore_temporary_set,&
@@ -151,7 +152,7 @@ CONTAINS
                                       ng3x3=n3x3con, ng4x6=n4x6con, &
                                       nconstraint=nconstraint, nvsite=nvsitecon)
                IF (nconstraint == 0) CYCLE
-               ishake_int = 0
+               ishake_int = MERGE(0, 1, ishake_ext == 1 .OR. .NOT. gci%joint_colvar_checks)
                int_max_sigma = -1.0E+10_dp
                Shake_Intra_Loop: DO WHILE ((ABS(int_max_sigma) >= shake_tol) .AND. (ishake_int <= Max_Shake_Iter))
                   int_max_sigma = 0.0_dp
@@ -202,6 +203,9 @@ CONTAINS
             IF (gci%nvsite /= 0) THEN
                CALL shake_vsite_ext(gci, pos)
             END IF
+            IF (gci%joint_colvar_checks) &
+               CALL check_local_colvars(local_molecules, molecule_set, particle_set, cell, group, &
+                                        max_sigma, pos=pos)
             CALL restore_temporary_set(particle_set, local_particles, pos=pos, vel=vel)
          END IF
          CALL shake_ext_info(log_unit, ishake_ext, max_sigma)
@@ -285,7 +289,7 @@ CONTAINS
                CALL get_molecule_kind(molecule_kind, ncolv=ncolv, ng3x3=n3x3con, &
                                       ng4x6=n4x6con, nconstraint=nconstraint)
                IF (nconstraint == 0) CYCLE
-               irattle_int = 0
+               irattle_int = MERGE(0, 1, irattle_ext == 1 .OR. .NOT. gci%joint_colvar_checks)
                int_max_sigma = -1.0E+10_dp
                Rattle_Intra_Loop: DO WHILE (ABS(int_max_sigma) >= rattle_tol)
                   int_max_sigma = 0.0_dp
@@ -324,6 +328,9 @@ CONTAINS
                CALL rattle_colv_ext(gci, particle_set, vel, dt, &
                                     irattle_ext, cell, imass, max_sigma)
             END IF
+            IF (gci%joint_colvar_checks) &
+               CALL check_local_colvars(local_molecules, molecule_set, particle_set, cell, group, &
+                                        max_sigma, vel=vel)
             CALL restore_temporary_set(particle_set, local_particles, vel=vel)
          END IF
          CALL rattle_ext_info(log_unit, irattle_ext, max_sigma)
@@ -425,7 +432,7 @@ CONTAINS
                                       ng3x3=n3x3con, ng4x6=n4x6con, &
                                       nconstraint=nconstraint, nvsite=nvsitecon)
                IF (nconstraint == 0) CYCLE
-               ishake_int = 0
+               ishake_int = MERGE(0, 1, ishake_ext == 1 .OR. .NOT. gci%joint_colvar_checks)
                int_max_sigma = -1.0E+10_dp
                Shake_Roll_Intra_Loop: DO WHILE (ABS(int_max_sigma) >= shake_tol)
                   int_max_sigma = 0.0_dp
@@ -476,6 +483,9 @@ CONTAINS
             IF (gci%nvsite /= 0) THEN
                CPABORT("Virtual Site Constraint/Restraint not implemented for SHAKE_ROLL!")
             END IF
+            IF (gci%joint_colvar_checks) &
+               CALL check_local_colvars(local_molecules, molecule_set, particle_set, cell, group, &
+                                        max_sigma, pos=pos)
             CALL restore_temporary_set(particle_set, local_particles, pos=pos, vel=vel)
          END IF
          CALL shake_ext_info(log_unit, ishake_ext, max_sigma)
@@ -580,7 +590,7 @@ CONTAINS
                                       nconstraint=nconstraint)
                IF (nconstraint == 0) CYCLE
                int_max_sigma = -1.0E+10_dp
-               irattle_int = 0
+               irattle_int = MERGE(0, 1, irattle_ext == 1 .OR. .NOT. gci%joint_colvar_checks)
                Rattle_Roll_Intramolecular: DO WHILE (ABS(int_max_sigma) >= rattle_tol)
                   int_max_sigma = 0.0_dp
                   irattle_int = irattle_int + 1
@@ -622,6 +632,9 @@ CONTAINS
                CALL rattle_roll_colv_ext(gci, particle_set, vel, r_rattle, dt, &
                                          irattle_ext, veps, cell, imass, max_sigma)
             END IF
+            IF (gci%joint_colvar_checks) &
+               CALL check_local_colvars(local_molecules, molecule_set, particle_set, cell, para_env, &
+                                        max_sigma, vel=vel, rmat=r_rattle, veps=veps)
             CALL restore_temporary_set(particle_set, local_particles, vel=vel)
          END IF
          CALL rattle_ext_info(log_unit, irattle_ext, max_sigma)
@@ -631,6 +644,32 @@ CONTAINS
       CALL check_tol(roll_tol, iroll, 'RATTLE', veps=veps)
       CALL timestop(handle)
    END SUBROUTINE rattle_roll_control
+
+   SUBROUTINE check_local_colvars(local_molecules, molecule_set, particle_set, cell, group, &
+                                  max_sigma, pos, vel, rmat, veps)
+      TYPE(distribution_1d_type), POINTER                :: local_molecules
+      TYPE(molecule_type), POINTER                       :: molecule_set(:)
+      TYPE(particle_type), POINTER                       :: particle_set(:)
+      TYPE(cell_type), POINTER                           :: cell
+
+      CLASS(mp_comm_type), INTENT(IN) :: group
+      REAL(KIND=dp), INTENT(INOUT) :: max_sigma
+      REAL(KIND=dp), INTENT(IN), OPTIONAL :: pos(:, :), vel(:, :), rmat(:, :), veps(:, :)
+
+      INTEGER :: ikind, imol, i
+      TYPE(molecule_type), POINTER :: molecule
+
+      ! Global corrections can invalidate already-converged local collective variables.
+      DO ikind = 1, SIZE(local_molecules%n_el)
+         DO imol = 1, local_molecules%n_el(ikind)
+            i = local_molecules%list(ikind)%array(imol)
+            molecule => molecule_set(i)
+            CALL check_colv_int(molecule, particle_set, cell, max_sigma, pos=pos, vel=vel, &
+                                rmat=rmat, veps=veps)
+         END DO
+      END DO
+      CALL group%max(max_sigma)
+   END SUBROUTINE check_local_colvars
 
 ! **************************************************************************************************
 !> \brief ...
@@ -693,7 +732,11 @@ CONTAINS
                      molecule => molecule_set(i)
                      ! Collective Variables
                      DO j = 1, ncolv%ntot
-                        lagr(my_index + 1) = molecule%lci%lcolv(j)%lambda
+                        IF (id_type == "S") THEN
+                           lagr(my_index + 1) = molecule%lci%lcolv(j)%lambda_shake
+                        ELSE
+                           lagr(my_index + 1) = molecule%lci%lcolv(j)%lambda_rattle
+                        END IF
                         my_index = my_index + 1
                      END DO
                      ! 3x3
@@ -718,7 +761,11 @@ CONTAINS
             CALL reallocate(lagr, 1, SIZE(lagr) + gci%ntot)
             ! Collective Variables
             DO j = 1, gci%ncolv%ntot
-               lagr(my_index + 1) = gci%lcolv(j)%lambda
+               IF (id_type == "S") THEN
+                  lagr(my_index + 1) = gci%lcolv(j)%lambda_shake
+               ELSE
+                  lagr(my_index + 1) = gci%lcolv(j)%lambda_rattle
+               END IF
                my_index = my_index + 1
             END DO
             ! 3x3
@@ -881,30 +928,21 @@ CONTAINS
 
       CHARACTER(LEN=*), PARAMETER :: routineN = 'shake_update_targets'
 
-      INTEGER                                            :: handle, i, ikind, imol, nkind, &
-                                                            nmol_per_kind
+      INTEGER                                            :: handle, ikind, nkind
       LOGICAL                                            :: do_ext_constraint
-      TYPE(colvar_counters)                              :: ncolv
-      TYPE(molecule_kind_type), POINTER                  :: molecule_kind
-      TYPE(molecule_type), POINTER                       :: molecule
       TYPE(section_vals_type), POINTER                   :: motion_section
 
       CALL timeset(routineN, handle)
+      CPASSERT(ASSOCIATED(local_molecules))
+      CPASSERT(ASSOCIATED(molecule_set))
       motion_section => section_vals_get_subs_vals(root_section, "MOTION")
+      CALL shake_update_colv_targets(dt, motion_section)
       nkind = SIZE(molecule_kind_set)
       do_ext_constraint = (gci%ntot /= 0)
       ! Intramolecular Constraints
       MOL: DO ikind = 1, nkind
-         nmol_per_kind = local_molecules%n_el(ikind)
-         DO imol = 1, nmol_per_kind
-            i = local_molecules%list(ikind)%array(imol)
-            molecule => molecule_set(i)
-            molecule_kind => molecule%molecule_kind
-            CALL get_molecule_kind(molecule_kind, ncolv=ncolv)
-
-            ! Updating TARGETS for Collective Variables only
-            IF (ncolv%ntot /= 0) CALL shake_update_colv_int(molecule, dt, motion_section)
-         END DO
+         IF (ASSOCIATED(molecule_kind_set(ikind)%colv_list)) &
+            CALL shake_update_colv_low(molecule_kind_set(ikind)%colv_list, dt, motion_section)
       END DO MOL
       ! Intermolecular constraints
       IF (do_ext_constraint) THEN

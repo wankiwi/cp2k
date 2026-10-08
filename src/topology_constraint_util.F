@@ -294,6 +294,7 @@ CONTAINS
          cons_info%nconst_colv = nhdist + n_start_colv
          CALL reallocate(cons_info%const_colv_mol, 1, cons_info%nconst_colv)
          CALL reallocate(cons_info%const_colv_molname, 1, cons_info%nconst_colv)
+         CALL reallocate(cons_info%const_colv_unit, 1, cons_info%nconst_colv)
          CALL reallocate(cons_info%const_colv_target, 1, cons_info%nconst_colv)
          CALL reallocate(cons_info%const_colv_target_growth, 1, cons_info%nconst_colv)
          CALL colvar_p_reallocate(cons_info%colvar_set, 1, cons_info%nconst_colv)
@@ -305,6 +306,7 @@ CONTAINS
          CALL reallocate(cons_info%colv_exclude_mm, 1, cons_info%nconst_colv)
          ! Bonds involving hydrogens are by their nature only intramolecular
          cons_info%colv_intermolecular(n_start_colv + 1:cons_info%nconst_colv) = .FALSE.
+         cons_info%const_colv_unit(n_start_colv + 1:cons_info%nconst_colv) = "angstrom"
          cons_info%colv_exclude_qm(n_start_colv + 1:cons_info%nconst_colv) = .FALSE.
          cons_info%colv_exclude_mm(n_start_colv + 1:cons_info%nconst_colv) = .FALSE.
          cons_info%colv_restraint(n_start_colv + 1:cons_info%nconst_colv) = cons_info%hbonds_restraint
@@ -931,6 +933,7 @@ CONTAINS
          colv_list(ncolv_mol)%type_id = cons_info%colvar_set(j)%colvar%type_id
          colv_list(ncolv_mol)%i_atoms = cons_info%colvar_set(j)%colvar%i_atom
          colv_list(ncolv_mol)%use_points = cons_info%colvar_set(j)%colvar%use_points
+         colv_list(ncolv_mol)%cv_unit = cons_info%const_colv_unit(j)
          ! Restraint
          colv_list(ncolv_mol)%restraint%active = cons_info%colv_restraint(j)
          colv_list(ncolv_mol)%restraint%k0 = cons_info%colv_k0(j)
@@ -1113,6 +1116,8 @@ CONTAINS
          k = ilist(kk)
          lcolv(kk)%init = .FALSE.
          lcolv(kk)%lambda = 0.0_dp
+         lcolv(kk)%lambda_shake = 0.0_dp
+         lcolv(kk)%lambda_rattle = 0.0_dp
          lcolv(kk)%sigma = 0.0_dp
 
          ! Set Up colvar variable

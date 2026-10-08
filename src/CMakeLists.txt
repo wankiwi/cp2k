@@ -1190,6 +1190,8 @@ list(
   CP2K_SRCS_F
   motion/averages_types.F
   motion/bfgs_optimizer.F
+  motion/blue_moon.F
+  motion/blue_moon_types.F
   motion/cell_opt.F
   motion/cell_opt_types.F
   motion/cell_opt_utils.F

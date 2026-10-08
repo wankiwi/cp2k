@@ -1,0 +1,5 @@
+# Analytic point-charge forces and work; these catch the old moving-RATTLE offset.
+"nacl_fixed.inp" = [{matcher="BlueMoonLambda", tol=3e-3, ref=2.3039359999999998}, {matcher="BlueMoonWeight", tol=1e-9, ref=3.73446512848024}, {matcher="BlueMoonWork", tol=2e-3, ref=0}]
+"nacl_forward.inp" = [{matcher="BlueMoonLambda", tol=3e-3, ref=2.285614514055333}, {matcher="BlueMoonWeight", tol=1e-9, ref=3.73446512848024}, {matcher="BlueMoonWork", tol=2e-3, ref=0.022947569721115356}]
+"nacl_reverse.inp" = [{matcher="BlueMoonLambda", tol=3e-3, ref=2.3224786696988753}, {matcher="BlueMoonWeight", tol=1e-9, ref=3.73446512848024}, {matcher="BlueMoonWork", tol=2e-3, ref=-0.02313188755019965}]
+"nacl_slow_default_tolerance.inp" = [{matcher="BlueMoonLambda", tol=3e-3, ref=2.303567414470853}, {matcher="BlueMoonWeight", tol=1e-9, ref=3.73446512848024}, {matcher="BlueMoonWork", tol=2e-3, ref=0.0004607503399733674}]

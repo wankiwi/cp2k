@@ -29,6 +29,7 @@ MODULE integrator
                                               get_atomic_kind,&
                                               get_atomic_kind_set
    USE barostat_types,                  ONLY: barostat_type
+   USE blue_moon,                       ONLY: blue_moon_accumulate
    USE cell_methods,                    ONLY: init_cell,&
                                               read_xyz_comment
    USE cell_types,                      ONLY: cell_type,&
@@ -2571,7 +2572,7 @@ CONTAINS
                                                             nparticle, nparticle_kind, &
                                                             nparticle_local
       INTEGER, POINTER                                   :: itimes
-      REAL(KIND=dp)                                      :: dm, dt, mass
+      REAL(KIND=dp)                                      :: dm, dt, inner_dt, mass
       REAL(KIND=dp), ALLOCATABLE, DIMENSION(:, :)        :: pos, vel
       TYPE(atomic_kind_list_type), POINTER               :: atomic_kinds
       TYPE(atomic_kind_type), DIMENSION(:), POINTER      :: atomic_kind_set
@@ -2598,6 +2599,7 @@ CONTAINS
       dt = simpar%dt
 
       n_time_steps = simpar%n_time_steps
+      inner_dt = dt/n_time_steps
 
       CALL force_env_get(force_env, subsys=subsys, cell=cell)
       CALL force_env_get(force_env%sub_force_env(1)%force_env, subsys=subsys_respa)
@@ -2625,9 +2627,6 @@ CONTAINS
       ALLOCATE (vel(3, nparticle))
       vel(:, :) = 0.0_dp
 
-      IF (simpar%constraint) CALL getold(gci, local_molecules, molecule_set, &
-                                         molecule_kind_set, particle_set, cell)
-
       ! Multiple time step (first part)
       DO iparticle_kind = 1, nparticle_kind
          atomic_kind => atomic_kind_set(iparticle_kind)
@@ -2644,6 +2643,8 @@ CONTAINS
 
       ! Velocity Verlet (first part)
       DO i_step = 1, n_time_steps
+         IF (simpar%constraint) CALL getold(gci, local_molecules, molecule_set, &
+                                            molecule_kind_set, particle_set, cell)
          pos(:, :) = 0.0_dp
          DO iparticle_kind = 1, nparticle_kind
             atomic_kind => atomic_kind_set(iparticle_kind)
@@ -2662,12 +2663,13 @@ CONTAINS
          IF (simpar%constraint) THEN
             ! Possibly update the target values
             CALL shake_update_targets(gci, local_molecules, molecule_set, &
-                                      molecule_kind_set, dt, force_env%root_section)
+                                      molecule_kind_set, inner_dt, force_env%root_section)
 
             CALL shake_control(gci, local_molecules, molecule_set, &
-                               molecule_kind_set, particle_set, pos, vel, dt, simpar%shake_tol, &
+                               molecule_kind_set, particle_set, pos, vel, inner_dt, simpar%shake_tol, &
                                simpar%info_constraint, simpar%lagrange_multipliers, simpar%dump_lm, cell, &
                                para_env, local_particles)
+            CALL blue_moon_accumulate(md_env)
          END IF
 
          ! Broadcast the new particle positions
@@ -2697,7 +2699,7 @@ CONTAINS
          END DO
 
          IF (simpar%constraint) CALL rattle_control(gci, local_molecules, molecule_set, &
-                                                    molecule_kind_set, particle_set, vel, dt, simpar%shake_tol, &
+                                                    molecule_kind_set, particle_set, vel, inner_dt, simpar%shake_tol, &
                                                     simpar%info_constraint, simpar%lagrange_multipliers, &
                                                     simpar%dump_lm, cell, para_env, local_particles)
 
@@ -2724,6 +2726,11 @@ CONTAINS
             vel(3, iparticle) = vel(3, iparticle) + dm*(particle_set(iparticle)%f(3) - particle_set_respa(iparticle)%f(3))
          END DO
       END DO
+
+      IF (simpar%constraint) CALL rattle_control(gci, local_molecules, molecule_set, &
+                                                 molecule_kind_set, particle_set, vel, dt, simpar%shake_tol, &
+                                                 simpar%info_constraint, simpar%lagrange_multipliers, &
+                                                 simpar%dump_lm, cell, para_env, local_particles)
 
       ! Broadcast the new particle velocities
       CALL update_particle_set(particle_set, para_env, vel=vel)

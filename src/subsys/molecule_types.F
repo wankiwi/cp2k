@@ -41,6 +41,8 @@ MODULE molecule_types
       TYPE(colvar_type), POINTER                         :: colvar => NULL(), &
                                                             colvar_old => NULL()
       REAL(KIND=dp)                                      :: lambda = 0.0_dp, &
+                                                            lambda_shake = 0.0_dp, &
+                                                            lambda_rattle = 0.0_dp, &
                                                             sigma = 0.0_dp
       LOGICAL                                            :: init = .FALSE.
    END TYPE local_colvar_constraint_type
@@ -133,6 +135,7 @@ MODULE molecule_types
 
    TYPE global_constraint_type
       TYPE(colvar_counters)                              :: ncolv = colvar_counters()
+      LOGICAL                                            :: joint_colvar_checks = .FALSE.
       INTEGER                                            :: ntot = 0, &
                                                             nrestraint = 0, &
                                                             ng3x3 = 0, &

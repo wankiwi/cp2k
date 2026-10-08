@@ -1,0 +1,118 @@
+&GLOBAL
+  PROJECT nacl_5000
+  RUN_TYPE MD
+  PRINT_LEVEL LOW
+&END GLOBAL
+
+&FORCE_EVAL
+  METHOD FIST
+  &MM
+    &FORCEFIELD
+      &CHARGE
+        ATOM Na
+        CHARGE 1.0
+      &END CHARGE
+      &CHARGE
+        ATOM Cl
+        CHARGE -1.0
+      &END CHARGE
+      &SPLINE
+        RCUT_NB [angstrom] 20.0
+      &END SPLINE
+      &NONBONDED
+        &LENNARD-JONES
+          ATOMS Na Na
+          EPSILON [eV] 0.0
+          SIGMA [angstrom] 1.0
+          RCUT [angstrom] 20.0
+        &END LENNARD-JONES
+        &LENNARD-JONES
+          ATOMS Na Cl
+          EPSILON [eV] 0.0
+          SIGMA [angstrom] 1.0
+          RCUT [angstrom] 20.0
+        &END LENNARD-JONES
+        &LENNARD-JONES
+          ATOMS Cl Cl
+          EPSILON [eV] 0.0
+          SIGMA [angstrom] 1.0
+          RCUT [angstrom] 20.0
+        &END LENNARD-JONES
+      &END NONBONDED
+    &END FORCEFIELD
+    &POISSON
+      &EWALD
+        EWALD_TYPE NONE
+      &END EWALD
+    &END POISSON
+  &END MM
+  &SUBSYS
+    &CELL
+      ABC 40.0 40.0 40.0
+      PERIODIC XYZ
+    &END CELL
+    &TOPOLOGY
+      COORD_FILE_FORMAT XYZ
+      COORD_FILE_NAME nacl.xyz
+      CONN_FILE_FORMAT OFF
+    &END TOPOLOGY
+    &COLVAR
+      &DISTANCE
+        ATOMS 1 2
+      &END DISTANCE
+    &END COLVAR
+  &END SUBSYS
+&END FORCE_EVAL
+
+&MOTION
+  &MD
+    ENSEMBLE NVE
+    STEPS 5000
+    TIMESTEP 1.0
+    TEMPERATURE 0.0
+  &END MD
+  &CONSTRAINT
+    SHAKE_TOLERANCE 1e-10
+    &COLLECTIVE
+      COLVAR 1
+      INTERMOLECULAR
+      TARGET [angstrom] 2.50000000
+      TARGET_GROWTH [angstrom*fs^-1] 0.0005000000
+      TARGET_LIMIT [angstrom] 10.00000000
+    &END COLLECTIVE
+    &BLUE_MOON
+      &EACH
+        MD 1
+      &END EACH
+      TIME_UNIT fs
+      ENERGY_UNIT eV
+    &END BLUE_MOON
+    &COLVAR_SLOW_GROWTH
+      &EACH
+        MD 1
+      &END EACH
+      TIME_UNIT fs
+      ENERGY_UNIT eV
+    &END COLVAR_SLOW_GROWTH
+    &LAGRANGE_MULTIPLIERS
+      &EACH
+        MD 1
+      &END EACH
+    &END LAGRANGE_MULTIPLIERS
+  &END CONSTRAINT
+  &PRINT
+    &TRAJECTORY
+      FORMAT XYZ
+      UNIT angstrom
+      &EACH
+        MD 1
+      &END EACH
+    &END TRAJECTORY
+    &VELOCITIES
+      UNIT angstrom*fs^-1
+      &EACH
+        MD 1
+      &END EACH
+    &END VELOCITIES
+  &END PRINT
+&END MOTION

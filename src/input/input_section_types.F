@@ -1048,7 +1048,7 @@ CONTAINS
 ! **************************************************************************************************
    SUBROUTINE section_vals_val_get(section_vals, keyword_name, i_rep_section, &
                                    i_rep_val, n_rep_val, val, l_val, i_val, r_val, c_val, l_vals, i_vals, r_vals, &
-                                   c_vals, explicit)
+                                   c_vals, explicit, unit_str)
 
       TYPE(section_vals_type), INTENT(IN), TARGET        :: section_vals
       CHARACTER(len=*), INTENT(in)                       :: keyword_name
@@ -1065,6 +1065,7 @@ CONTAINS
       CHARACTER(LEN=default_string_length), &
          DIMENSION(:), OPTIONAL, POINTER                 :: c_vals
       LOGICAL, INTENT(out), OPTIONAL                     :: explicit
+      CHARACTER(LEN=*), INTENT(out), OPTIONAL            :: unit_str
 
       INTEGER                                            :: ik, irk, irs, len_key, my_index, &
                                                             tmp_index
@@ -1096,6 +1097,7 @@ CONTAINS
       IF (PRESENT(i_rep_val)) irk = i_rep_val
       IF (PRESENT(val)) NULLIFY (val)
       IF (PRESENT(explicit)) explicit = .FALSE.
+      IF (PRESENT(unit_str)) unit_str = ""
       section => s_vals%section
       valRequested = PRESENT(l_val) .OR. PRESENT(i_val) .OR. PRESENT(r_val) .OR. &
                      PRESENT(c_val) .OR. PRESENT(l_vals) .OR. PRESENT(i_vals) .OR. &
@@ -1134,6 +1136,7 @@ CONTAINS
          my_val => keyword%default_value
       END IF
       IF (PRESENT(val)) val => my_val
+      IF (PRESENT(unit_str) .AND. ASSOCIATED(my_val)) CALL val_get(my_val, unit_str=unit_str)
       IF (valRequested) THEN
          IF (.NOT. ASSOCIATED(my_val)) THEN
             CALL cp_abort(__LOCATION__, &

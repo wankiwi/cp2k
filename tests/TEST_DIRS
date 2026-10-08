@@ -70,6 +70,7 @@ QS/regtest-gapw_xc                                          libint !ifx
 Fist/regtest-12
 QS/regtest-scalable-gw                                      libint !ifx
 QS/regtest-ls-rtp
+Fist/regtest-blue-moon
 QS/regtest-sym-1
 QS/regtest-tddfpt-force                                     libint !ifx
 QS/regtest-embed                                            libint !ifx

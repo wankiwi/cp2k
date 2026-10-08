@@ -508,6 +508,7 @@ CONTAINS
             cons_info%nconst_colv = ncons
             ALLOCATE (cons_info%const_colv_mol(ncons))
             ALLOCATE (cons_info%const_colv_molname(ncons))
+            ALLOCATE (cons_info%const_colv_unit(ncons))
             ALLOCATE (cons_info%const_colv_target(ncons))
             ALLOCATE (cons_info%const_colv_target_growth(ncons))
             ALLOCATE (cons_info%colvar_set(ncons))
@@ -524,6 +525,7 @@ CONTAINS
                                     label="COLLECTIVE")
                cons_info%const_colv_mol(ig) = 0
                cons_info%const_colv_molname(ig) = "UNDEF"
+               cons_info%const_colv_unit(ig) = "internal_cp2k"
                ! Exclude QM or MM
                CALL section_vals_val_get(collective_section, "EXCLUDE_QM", i_rep_section=ig, &
                                          l_val=cons_info%colv_exclude_qm(ig))
@@ -569,7 +571,10 @@ CONTAINS
                                          n_rep_val=n_rep, i_rep_section=ig)
                IF (n_rep /= 0) THEN
                   CALL section_vals_val_get(collective_section, "TARGET", &
-                                            r_val=cons_info%const_colv_target(ig), i_rep_section=ig)
+                                            r_val=cons_info%const_colv_target(ig), i_rep_section=ig, &
+                                            unit_str=cons_info%const_colv_unit(ig))
+                  IF (LEN_TRIM(cons_info%const_colv_unit(ig)) == 0) &
+                     cons_info%const_colv_unit(ig) = "internal_cp2k"
                ELSE
                   cons_info%const_colv_target(ig) = -HUGE(0.0_dp)
                END IF
@@ -622,4 +627,3 @@ CONTAINS
    END SUBROUTINE check_restraint
 
 END MODULE topology_input
-

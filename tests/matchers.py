@@ -28,7 +28,31 @@ class MatcherRegistry(Dict[str, Matcher]):
 
 
 # ======================================================================================
+class BlueMoonMatcher(GenericMatcher):
+    def __init__(self, col: int):
+        super().__init__("BlueMoon:", col=2)
+        self.data_col = col
+
+    def run(self, output: str, **kwargs: Any) -> MatchResult:
+        for line in reversed(output.splitlines()):
+            fields = line.split()
+            if len(fields) != 12:
+                continue
+            try:
+                int(fields[0])
+                int(fields[2])
+                values = [float(field) for field in fields]
+            except ValueError:
+                continue
+            return super().run(f"BlueMoon: {values[self.data_col - 1]}", **kwargs)
+        return super().run("", **kwargs)
+
+
+# ======================================================================================
 registry = MatcherRegistry()
+registry["BlueMoonLambda"] = BlueMoonMatcher(col=6)
+registry["BlueMoonWeight"] = BlueMoonMatcher(col=7)
+registry["BlueMoonWork"] = BlueMoonMatcher(col=12)
 
 # Total energy in Hartree
 registry["E_total"] = GenericMatcher(r"Total energy:", col=3)

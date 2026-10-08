@@ -1,0 +1,77 @@
+{
+  "generated_SGT": "2026-10-08T11:04:47.232148+08:00",
+  "script_sha256": "fb0648a3d560cad6741508a26389f470a81cce29f5293e4f7dd1a3d66cd8c499",
+  "inputs_sha256": {
+    "nacl_growth_0p00025_steps.csv": "4de1f5a048f860db88880467a126cd2b1f324ddf1a6a65c99e71b9b99391da5b",
+    "nacl_radial_steps.csv": "b759e07c07907f012efc32c62df9450bc15b039de6f0c4412d440fbe016ce8e8",
+    "nacl_growth_0p001_steps.csv": "2a60387d10585bf017e66ddcad769f24f36678eb8615e29aa4b9a5da20046bfb"
+  },
+  "metrics": {
+    "nacl_growth_0p00025_steps.csv": {
+      "growth_A_per_fs": 0.00025,
+      "rendered_rows": 10000,
+      "master_force_MAE_eV_per_A": 0.7228887009662286,
+      "fixed_force_MAE_eV_per_A": 0.00017632757026488457,
+      "master_final_work_error_eV": 1.8072217524155838,
+      "fixed_final_work_error_eV": 0.00044081892566483205
+    },
+    "nacl_radial_steps.csv": {
+      "growth_A_per_fs": 0.0005,
+      "rendered_rows": 5000,
+      "master_force_MAE_eV_per_A": 1.4457738696713975,
+      "fixed_force_MAE_eV_per_A": 0.0003491232291402382,
+      "master_final_work_error_eV": 3.614434674178475,
+      "fixed_final_work_error_eV": 0.0008728080728475085
+    },
+    "nacl_growth_0p001_steps.csv": {
+      "growth_A_per_fs": 0.001,
+      "rendered_rows": 2500,
+      "master_force_MAE_eV_per_A": 2.891544206606663,
+      "fixed_force_MAE_eV_per_A": 0.0006947146271765714,
+      "master_final_work_error_eV": 7.228860516516676,
+      "fixed_final_work_error_eV": 0.0017367865679536187
+    }
+  },
+  "smoothing": false,
+  "offset_adjustment": false,
+  "excluded_frames": 0,
+  "same_axis_scales_per_column": true,
+  "presentation": {
+    "layout": "Two shared panels with all three growth rates overlaid",
+    "master": "Solid line, one color per growth rate",
+    "fixed": "Rate-colored short-dashed, long-dashed and dash-dot lines; no markers",
+    "analytic": "Dark open-circle markers, no connecting line",
+    "analytic_force": "One common Coulomb function sampled on the slow-rate native grid",
+    "analytic_work": "Each rate's discrete reference retained; sparse marker positions staggered",
+    "analytic_marker_stride": {
+      "nacl_growth_0p00025_steps.csv": 624,
+      "nacl_radial_steps.csv": 312,
+      "nacl_growth_0p001_steps.csv": 156
+    },
+    "all_master_and_fixed_samples_drawn": true
+  },
+  "reference_work": "Sum of analytic force_n times target increment_n, including first interval",
+  "files": {
+    "nacl_growth_rate_comparison.png": {
+      "sha256": "5d2a430082f3a0047949eada049820d4413b679a46a4c22d639b358e8a918748",
+      "bytes": 315978,
+      "pixels": [
+        3150,
+        1440
+      ],
+      "mode": "RGBA",
+      "dpi": [
+        299.9994,
+        299.9994
+      ]
+    },
+    "nacl_growth_rate_comparison.pdf": {
+      "sha256": "0bf5191bfdb82df55a594895e3f536e616a562fcc30ebfe7e6dcc0c37eeac2ea",
+      "bytes": 666253
+    },
+    "nacl_growth_rate_comparison.svg": {
+      "sha256": "a36e01fd2fef2db7ae374b20c79e91f46606c5a0ebd3ef07109af7384a3a2cf9",
+      "bytes": 1685065
+    }
+  }
+}

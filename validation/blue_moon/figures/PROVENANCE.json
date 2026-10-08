@@ -1,0 +1,96 @@
+{
+  "recorded_SGT": "2026-10-08T11:04:07.011174+08:00",
+  "purpose": "Original moving-COLVAR defect reproduction and correction",
+  "upstream_sha": "8a1319df473a130350026b9c8f4392d2a6d93b6e",
+  "solver_source_patch_sha256": "e256e259c839bc7d72b477889ad9599bc50109da0bfe41a812cb23f476cd9da4",
+  "source_sha256": {
+    "runs/master_blue_moon_validation/nacl_radial_nve/upstream_master/growth_0p0005_dt_1fs/native_observations.csv": "aaa598503bc3f53511630122d017e6c0cbe08c30e64b86f5d703388198fa224d",
+    "runs/master_blue_moon_validation/nacl_radial_nve/master_fixed_compatibility/growth_0p0005_dt_1fs/native_observations.csv": "56ed12ddf74898b9b6c62f127cd164bbe9296933e6848d18666becb64069b7d3",
+    "runs/master_blue_moon_validation/input_manifest_nacl_5000.json": "691049216e6bb6c0d181a0f843c91cf67fca7f3b639072dd8ccba50027949761",
+    "runs/master_blue_moon_validation/nacl_5000_pair_receipt.json": "b20048719878732ace91af4ae9d9b7e543ccdcf96570c86e0569bb35569ffe7d",
+    "runs/master_blue_moon_validation/nacl_5000_force_work_comparison_receipt.json": "0e9bce16c30ecc6231ed4df7ca6c24e9574bdd04d9cc20885c8779e3a7e87a35",
+    "runs/master_blue_moon_validation/nacl_radial_nve_5000/upstream_master/native_observations.csv": "fa4a0ca4a87fedbb9826528a2229bc29bbbbb2966fcc621f74526594fb58f276",
+    "runs/master_blue_moon_validation/nacl_radial_nve_5000/master_fixed/native_observations.csv": "9ad4b14d3cc811f0265647aa8ebd410cdbe377feb0391171eebd6880550f4300",
+    "runs/master_blue_moon_validation/input_manifest_nacl_growth_rates.json": "2ca1fd05f947554d6c4e4a8ab288a5a43280ea3eb6cfc64385328283a6ddc897",
+    "runs/master_blue_moon_validation/nacl_growth_rate_study_receipt.json": "35cc18ea1c0cb98cee04f55d345a9e678ed1cb81cdb1c4bc8470b8489815cecd",
+    "runs/master_blue_moon_validation/nacl_radial_nve_growth_rates/growth_0p00025_A_per_fs/upstream_master/native_observations.csv": "377193bea4199fa3caaa069c38800f364d6ee73f9db3516878d2bb36e80589a2",
+    "runs/master_blue_moon_validation/nacl_radial_nve_growth_rates/growth_0p00025_A_per_fs/upstream_master/execution_receipt.json": "32f695f85ded2289aaab86d8e49dab0d67f618bd8323780ca4c74f6cde605227",
+    "runs/master_blue_moon_validation/nacl_radial_nve_growth_rates/growth_0p00025_A_per_fs/upstream_master/NaCl.inp": "13b788fd11095aaee714da16c1d953773419da1d68f0e829dd7b6b9f2c852743",
+    "runs/master_blue_moon_validation/nacl_radial_nve_growth_rates/growth_0p00025_A_per_fs/upstream_master/nacl.xyz": "f51ab95284eb5cebf3259c33f2adb1633bc5040213d3d0b3380a7fffe1b5dda2",
+    "runs/master_blue_moon_validation/nacl_radial_nve_growth_rates/growth_0p00025_A_per_fs/master_fixed/native_observations.csv": "8f667cadee537d06f4d0c556683ebecd8744f74da1dcd407b81852b64feeaf6f",
+    "runs/master_blue_moon_validation/nacl_radial_nve_growth_rates/growth_0p00025_A_per_fs/master_fixed/execution_receipt.json": "04c1ea8f095ee7e39c1c4a51af154db032154319e5556426401c24727933fa3e",
+    "runs/master_blue_moon_validation/nacl_radial_nve_growth_rates/growth_0p00025_A_per_fs/master_fixed/NaCl.inp": "eabd6fc40d15e6130961fac7c247aabc005c18d992a601188e69f531e5268aa1",
+    "runs/master_blue_moon_validation/nacl_radial_nve_growth_rates/growth_0p00025_A_per_fs/master_fixed/nacl.xyz": "f51ab95284eb5cebf3259c33f2adb1633bc5040213d3d0b3380a7fffe1b5dda2",
+    "runs/master_blue_moon_validation/nacl_radial_nve_growth_rates/growth_0p001_A_per_fs/upstream_master/native_observations.csv": "5f0192f3eecde2b56feac89a58eaf6f0d08fdd0227a4cfc5915ed8e64c5c9af0",
+    "runs/master_blue_moon_validation/nacl_radial_nve_growth_rates/growth_0p001_A_per_fs/upstream_master/execution_receipt.json": "11002796b703cd678fcc9d80a1ec35b94f42ea9e9c9835cb4e211d38f79fb610",
+    "runs/master_blue_moon_validation/nacl_radial_nve_growth_rates/growth_0p001_A_per_fs/upstream_master/NaCl.inp": "ab30f36635d677ed122b68925a69c59b00d7737f5ce9b11bae46340feabc2672",
+    "runs/master_blue_moon_validation/nacl_radial_nve_growth_rates/growth_0p001_A_per_fs/upstream_master/nacl.xyz": "f51ab95284eb5cebf3259c33f2adb1633bc5040213d3d0b3380a7fffe1b5dda2",
+    "runs/master_blue_moon_validation/nacl_radial_nve_growth_rates/growth_0p001_A_per_fs/master_fixed/native_observations.csv": "1742eec7cd5165ef9ffc1652c25da2d6ea64f9a4806d77de6b08e9cf79b7e12f",
+    "runs/master_blue_moon_validation/nacl_radial_nve_growth_rates/growth_0p001_A_per_fs/master_fixed/execution_receipt.json": "b338d6551c1f9a588c40a19d2ca6c7543f2a449c68e15a4ed6943802453409b7",
+    "runs/master_blue_moon_validation/nacl_radial_nve_growth_rates/growth_0p001_A_per_fs/master_fixed/NaCl.inp": "db77e4fc9c5e138f913126d08f722bf21a6b2659399f5d16bcf76b4fb72ce848",
+    "runs/master_blue_moon_validation/nacl_radial_nve_growth_rates/growth_0p001_A_per_fs/master_fixed/nacl.xyz": "f51ab95284eb5cebf3259c33f2adb1633bc5040213d3d0b3380a7fffe1b5dda2"
+  },
+  "data_sha256": {
+    "data/nacl_moving_controls.csv": "2a2d25138d5a789dcf0b595292fbe5dfb3ba6179f6df8bb2b107ca210356599e",
+    "data/nacl_radial_steps.csv": "b759e07c07907f012efc32c62df9450bc15b039de6f0c4412d440fbe016ce8e8",
+    "data/nacl_growth_0p00025_steps.csv": "4de1f5a048f860db88880467a126cd2b1f324ddf1a6a65c99e71b9b99391da5b",
+    "data/nacl_growth_0p001_steps.csv": "2a60387d10585bf017e66ddcad769f24f36678eb8615e29aa4b9a5da20046bfb",
+    "data/nacl_growth_rate_metrics.csv": "719a995f82b08684b22c77938a2301ffec0c18fc04f2d3dfbffaec12cf0ccf10"
+  },
+  "transformations": [
+    "NaCl velocity divided by that case\u2019s positive target growth, explicitly labeled",
+    "NaCl error is the signed final SHAKE force minus the analytic Coulomb force",
+    "Derived CSV text normalized to LF line endings; all numerical cells unchanged",
+    "Analytic NaCl force 14.3996 / target^2 eV/angstrom; reference work is the same discrete sum of force_n * delta_target_n including the first interval; no fitted offsets or smoothing",
+    "NaCl primary curve: all 5000 native frames, g=0.0005 angstrom/fs, dt=1 fs, target 2.5 to 5.0 angstrom; matched input conditions with only duration/project changed from the 20-step control",
+    "NaCl three-rate comparison uses all 10000/5000/2500 frames at growth 0.00025/0.0005/0.001 angstrom/fs, with common 2.5 to 5.0 angstrom range and timestep 1 fs. Reuses the completed middle-rate result. Analytic work is recomputed on each native target schedule including the first interval; no smoothing, offsets, interpolation or frame exclusions."
+  ],
+  "sample_definition": "One deterministic trajectory per case; no replicate uncertainty inferred",
+  "all_raw_scientific_data_preserved": true,
+  "presentation": {
+    "updated_SGT": "2026-10-08T10:01:15.953088+08:00",
+    "master_display_label": "Master",
+    "fixed_display_label": "Fixed",
+    "numerical_data_unchanged": true,
+    "NaCl_rate_comparison": "Two shared panels with all three rates overlaid; force left and work right",
+    "NaCl_rate_master": "Solid lines; colors blue/orange/green for growth 0.00025/0.0005/0.001 angstrom/fs",
+    "NaCl_rate_fixed": "Same rate colors; short-dashed, long-dashed and dash-dot lines; no markers",
+    "NaCl_rate_analytic": "Dark open circles, no connecting line; common analytic force and three rate-specific discrete work references",
+    "analytic_marker_stride": {
+      "nacl_growth_0p00025_steps.csv": 624,
+      "nacl_radial_steps.csv": 312,
+      "nacl_growth_0p001_steps.csv": 156
+    }
+  },
+  "NaCl_growth_rates": [
+    {
+      "growth_A_per_fs": 0.00025,
+      "steps": 10000,
+      "duration_fs": 10000,
+      "target_range_A": [
+        2.5,
+        5.0
+      ]
+    },
+    {
+      "growth_A_per_fs": 0.0005,
+      "steps": 5000,
+      "duration_fs": 5000,
+      "target_range_A": [
+        2.5,
+        5.0
+      ]
+    },
+    {
+      "growth_A_per_fs": 0.001,
+      "steps": 2500,
+      "duration_fs": 2500,
+      "target_range_A": [
+        2.5,
+        5.0
+      ]
+    }
+  ],
+  "NaCl_growth_rate_manifest_sha256": "2ca1fd05f947554d6c4e4a8ab288a5a43280ea3eb6cfc64385328283a6ddc897",
+  "NaCl_growth_rate_study_receipt_sha256": "35cc18ea1c0cb98cee04f55d345a9e678ed1cb81cdb1c4bc8470b8489815cecd"
+}

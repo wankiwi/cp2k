@@ -345,7 +345,7 @@ CONTAINS
 
       CHARACTER(len=*), PARAMETER :: routineN = 'val_create_parsing'
 
-      CHARACTER(len=default_string_length)               :: c_val, info, location
+      CHARACTER(len=default_string_length)               :: c_val, info, location, real_unit_str
       CHARACTER(len=default_string_length), &
          DIMENSION(:), POINTER                           :: c_val_p
       INTEGER                                            :: handle, i, i_val
@@ -459,7 +459,7 @@ CONTAINS
                END IF
             ELSE
                CPASSERT(ASSOCIATED(default_value%r_val))
-               CALL val_create(val, r_vals=default_value%r_val)
+               CALL val_create(val, r_vals=default_value%r_val, unit_str=default_value%unit_str)
             END IF
          ELSE
             IF (n_var < 1) THEN
@@ -485,7 +485,9 @@ CONTAINS
                END DO
             END IF
             IF (ASSOCIATED(r_val_p)) THEN
-               CALL val_create(val, r_vals_ptr=r_val_p)
+               real_unit_str = ""
+               IF (LEN_TRIM(c_val) > 2) real_unit_str = c_val(2:LEN_TRIM(c_val) - 1)
+               CALL val_create(val, r_vals_ptr=r_val_p, unit_str=real_unit_str)
             END IF
          END IF
       CASE (char_t)

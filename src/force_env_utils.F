@@ -171,6 +171,8 @@ CONTAINS
                   DO j = 1, SIZE(molecules%els(i)%lci%lcolv)
                      ! Reset langrange multiplier
                      molecules%els(i)%lci%lcolv(j)%lambda = 0.0_dp
+                     molecules%els(i)%lci%lcolv(j)%lambda_shake = 0.0_dp
+                     molecules%els(i)%lci%lcolv(j)%lambda_rattle = 0.0_dp
                   END DO
                END IF
                IF (ASSOCIATED(molecules%els(i)%lci%lg3x3)) THEN
@@ -192,6 +194,8 @@ CONTAINS
                   DO j = 1, SIZE(gci%lcolv)
                      ! Reset langrange multiplier
                      gci%lcolv(j)%lambda = 0.0_dp
+                     gci%lcolv(j)%lambda_shake = 0.0_dp
+                     gci%lcolv(j)%lambda_rattle = 0.0_dp
                   END DO
                END IF
                IF (ASSOCIATED(gci%lg3x3)) THEN
@@ -319,6 +323,8 @@ CONTAINS
                   DO j = 1, SIZE(molecules%els(i)%lci%lcolv)
                      ! Reset langrange multiplier
                      molecules%els(i)%lci%lcolv(j)%lambda = 0.0_dp
+                     molecules%els(i)%lci%lcolv(j)%lambda_shake = 0.0_dp
+                     molecules%els(i)%lci%lcolv(j)%lambda_rattle = 0.0_dp
                   END DO
                END IF
                IF (ASSOCIATED(molecules%els(i)%lci%lg3x3)) THEN
@@ -340,6 +346,8 @@ CONTAINS
                   DO j = 1, SIZE(gci%lcolv)
                      ! Reset langrange multiplier
                      gci%lcolv(j)%lambda = 0.0_dp
+                     gci%lcolv(j)%lambda_shake = 0.0_dp
+                     gci%lcolv(j)%lambda_rattle = 0.0_dp
                   END DO
                END IF
                IF (ASSOCIATED(gci%lg3x3)) THEN

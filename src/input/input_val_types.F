@@ -62,6 +62,7 @@ MODULE input_val_types
 ! **************************************************************************************************
    TYPE val_type
       INTEGER :: ref_count = 0, type_of_var = no_t
+      CHARACTER(len=default_string_length) :: unit_str
       LOGICAL, DIMENSION(:), POINTER :: l_val => NULL()
       INTEGER, DIMENSION(:), POINTER :: i_val => NULL()
       CHARACTER(len=default_string_length), DIMENSION(:), POINTER :: &
@@ -99,7 +100,7 @@ CONTAINS
 ! **************************************************************************************************
    SUBROUTINE val_create(val, l_val, l_vals, l_vals_ptr, i_val, i_vals, i_vals_ptr, &
                          r_val, r_vals, r_vals_ptr, c_val, c_vals, c_vals_ptr, lc_val, lc_vals, &
-                         lc_vals_ptr, enum)
+                         lc_vals_ptr, enum, unit_str)
 
       TYPE(val_type), POINTER                            :: val
       LOGICAL, INTENT(in), OPTIONAL                      :: l_val
@@ -122,6 +123,7 @@ CONTAINS
       CHARACTER(LEN=default_string_length), &
          DIMENSION(:), OPTIONAL, POINTER                 :: lc_vals_ptr
       TYPE(enumeration_type), OPTIONAL, POINTER          :: enum
+      CHARACTER(LEN=*), INTENT(in), OPTIONAL             :: unit_str
 
       INTEGER                                            :: i, len_c, narg, nVal
 
@@ -130,6 +132,8 @@ CONTAINS
       NULLIFY (val%l_val, val%i_val, val%r_val, val%c_val, val%enum)
       val%type_of_var = no_t
       val%ref_count = 1
+      val%unit_str = ""
+      IF (PRESENT(unit_str)) val%unit_str = unit_str
 
       narg = 0
       val%type_of_var = no_t
@@ -330,7 +334,7 @@ CONTAINS
 !>      the c_val is too short to contain the string
 ! **************************************************************************************************
    SUBROUTINE val_get(val, has_l, has_i, has_r, has_lc, has_c, l_val, l_vals, i_val, &
-                      i_vals, r_val, r_vals, c_val, c_vals, len_c, type_of_var, enum)
+                      i_vals, r_val, r_vals, c_val, c_vals, len_c, type_of_var, enum, unit_str)
 
       TYPE(val_type), POINTER                            :: val
       LOGICAL, INTENT(out), OPTIONAL                     :: has_l, has_i, has_r, has_lc, has_c, l_val
@@ -344,6 +348,7 @@ CONTAINS
          DIMENSION(:), OPTIONAL, POINTER                 :: c_vals
       INTEGER, INTENT(out), OPTIONAL                     :: len_c, type_of_var
       TYPE(enumeration_type), OPTIONAL, POINTER          :: enum
+      CHARACTER(LEN=*), INTENT(out), OPTIONAL            :: unit_str
 
       INTEGER                                            :: i, l_in, l_out
 
@@ -461,6 +466,7 @@ CONTAINS
       IF (PRESENT(type_of_var)) type_of_var = val%type_of_var
 
       IF (PRESENT(enum)) enum => val%enum
+      IF (PRESENT(unit_str)) unit_str = val%unit_str
 
    END SUBROUTINE val_get
 
@@ -745,6 +751,7 @@ CONTAINS
       ALLOCATE (val_out)
       val_out%type_of_var = val_in%type_of_var
       val_out%ref_count = 1
+      val_out%unit_str = val_in%unit_str
       val_out%enum => val_in%enum
       IF (ASSOCIATED(val_out%enum)) CALL enum_retain(val_out%enum)
 

@@ -19,6 +19,7 @@ MODULE md_environment_types
                                               retain_averages
    USE barostat_types,                  ONLY: barostat_type,&
                                               release_barostat_type
+   USE blue_moon_types,                 ONLY: blue_moon_state_type
    USE cell_types,                      ONLY: cell_type
    USE extended_system_types,           ONLY: npt_info_type
    USE force_env_types,                 ONLY: force_env_release,&
@@ -70,6 +71,7 @@ MODULE md_environment_types
       TYPE(simpar_type), POINTER                 :: simpar => NULL()
       TYPE(average_quantities_type), POINTER     :: averages => NULL()
       TYPE(thermal_regions_type), POINTER        :: thermal_regions => NULL()
+      TYPE(blue_moon_state_type), POINTER         :: blue_moon => NULL()
    END TYPE md_environment_type
 
    ! *** Public subroutines and data types ***
@@ -112,6 +114,7 @@ CONTAINS
       md_env%init = .TRUE.
       md_env%first_time = .TRUE.
       md_env%ehrenfest_md = .FALSE.
+      ALLOCATE (md_env%blue_moon)
       averages_section => section_vals_get_subs_vals(md_section, "AVERAGES")
       CALL create_averages(md_env%averages, averages_section, force_env=force_env)
 
@@ -133,6 +136,7 @@ CONTAINS
       DEALLOCATE (md_env%constant)
       DEALLOCATE (md_env%used_time)
       DEALLOCATE (md_env%t)
+      DEALLOCATE (md_env%blue_moon)
 
       NULLIFY (md_env%cell)
       NULLIFY (md_env%simpar)
@@ -191,7 +195,7 @@ CONTAINS
                          force_env, para_env, reftraj, t, init, first_time, fe_env, thermostats, barostat, &
                          thermostat_coeff, thermostat_part, thermostat_shell, thermostat_baro, &
                          thermostat_fast, thermostat_slow, md_ener, averages, &
-                         thermal_regions, ehrenfest_md)
+                         thermal_regions, ehrenfest_md, blue_moon)
 
       TYPE(md_environment_type), INTENT(IN)              :: md_env
       INTEGER, OPTIONAL, POINTER                         :: itimes
@@ -214,8 +218,10 @@ CONTAINS
       TYPE(average_quantities_type), OPTIONAL, POINTER   :: averages
       TYPE(thermal_regions_type), OPTIONAL, POINTER      :: thermal_regions
       LOGICAL, OPTIONAL                                  :: ehrenfest_md
+      TYPE(blue_moon_state_type), OPTIONAL, POINTER      :: blue_moon
 
       IF (PRESENT(itimes)) itimes => md_env%itimes
+      IF (PRESENT(blue_moon)) blue_moon => md_env%blue_moon
       IF (PRESENT(fe_env)) fe_env => md_env%fe_env
       IF (PRESENT(constant)) constant => md_env%constant
       IF (PRESENT(used_time)) used_time => md_env%used_time

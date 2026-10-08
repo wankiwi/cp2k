@@ -45,11 +45,47 @@ MODULE constraint_clv
              shake_colv_ext, &
              rattle_colv_ext, &
              shake_update_colv_int, &
-             shake_update_colv_ext
+             shake_update_colv_ext, shake_update_colv_targets, shake_update_colv_low, check_colv_int
 
    CHARACTER(len=*), PARAMETER, PRIVATE :: moduleN = 'constraint_clv'
 
 CONTAINS
+
+   SUBROUTINE check_colv_int(molecule, particle_set, cell, max_sigma, pos, vel, rmat, veps)
+      TYPE(molecule_type), POINTER                       :: molecule
+      TYPE(particle_type), POINTER                       :: particle_set(:)
+      TYPE(cell_type), POINTER                           :: cell
+      REAL(KIND=dp), INTENT(INOUT)                       :: max_sigma
+      REAL(KIND=dp), INTENT(IN), OPTIONAL                :: pos(:, :), vel(:, :), rmat(:, :), &
+                                                            veps(:, :)
+
+      INTEGER                                            :: iconst
+      REAL(KIND=dp)                                      :: sigma
+      TYPE(colvar_constraint_type), POINTER              :: colv_list(:)
+      TYPE(fixd_constraint_type), POINTER                :: fixd_list(:)
+      TYPE(local_colvar_constraint_type), POINTER        :: lcolv(:)
+      TYPE(molecule_kind_type), POINTER                  :: molecule_kind
+
+      molecule_kind => molecule%molecule_kind
+      CALL get_molecule_kind(molecule_kind, colv_list=colv_list, fixd_list=fixd_list)
+      CALL get_molecule(molecule, lcolv=lcolv)
+      IF (.NOT. ASSOCIATED(colv_list)) RETURN
+      CPASSERT(PRESENT(pos) .NEQV. PRESENT(vel))
+      DO iconst = 1, SIZE(colv_list)
+         IF (colv_list(iconst)%restraint%active) CYCLE
+         IF (PRESENT(pos)) THEN
+            CALL colvar_eval_mol_f(lcolv(iconst)%colvar, cell, particles=particle_set, &
+                                   pos=pos, fixd_list=fixd_list)
+            sigma = diff_colvar(lcolv(iconst)%colvar, colv_list(iconst)%expected_value)
+            max_sigma = MAX(max_sigma, ABS(sigma))
+         ELSE
+            sigma = rattle_con_eval(lcolv(iconst)%colvar_old, vel, roll=PRESENT(rmat), &
+                                    rmat=rmat, veps=veps, particles=particle_set) - &
+                    colv_list(iconst)%target_velocity
+            max_sigma = MAX(max_sigma, rattle_colv_residual(sigma, colv_list(iconst)))
+         END IF
+      END DO
+   END SUBROUTINE check_colv_int
 
 ! **************************************************************************************************
 !> \brief Intramolecular subroutine
@@ -493,13 +529,14 @@ CONTAINS
       IF (ishake == 1) THEN
          DO iconst = 1, SIZE(colv_list)
             IF (colv_list(iconst)%restraint%active) CYCLE
+            lcolv(iconst)%lambda_shake = lcolv(iconst)%lambda
             ! Update positions
             CALL update_con_colv(pos, dtsqby2, lcolv(iconst), &
-                                 lambda=lcolv(iconst)%lambda, &
+                                 lambda=lcolv(iconst)%lambda_shake, &
                                  imass=imass)
             ! Update velocities
             CALL update_con_colv(vel, dtby2, lcolv(iconst), &
-                                 lambda=lcolv(iconst)%lambda, &
+                                 lambda=lcolv(iconst)%lambda_shake, &
                                  imass=imass)
          END DO
       ELSE
@@ -513,7 +550,8 @@ CONTAINS
             fdotf_sum = eval_Jac_colvar(lcolv(iconst)%colvar, &
                                         lcolv(iconst)%colvar_old, imass=imass)
             del_lam = 2.0_dp*lcolv(iconst)%sigma/(dt*dt*fdotf_sum)
-            lcolv(iconst)%lambda = lcolv(iconst)%lambda + del_lam
+            lcolv(iconst)%lambda_shake = lcolv(iconst)%lambda_shake + del_lam
+            lcolv(iconst)%lambda = lcolv(iconst)%lambda_shake
 
             ! Update positions
             CALL update_con_colv(pos, dtsqby2, lcolv(iconst), &
@@ -532,24 +570,23 @@ CONTAINS
                                 pos=pos, fixd_list=fixd_list)
          lcolv(iconst)%sigma = diff_colvar(lcolv(iconst)%colvar, &
                                            colv_list(iconst)%expected_value)
+         lcolv(iconst)%lambda = lcolv(iconst)%lambda_shake
          max_sigma = MAX(ABS(lcolv(iconst)%sigma), max_sigma)
       END DO
    END SUBROUTINE shake_colv_low
 
 ! **************************************************************************************************
 !> \brief Real Shake subroutine - Low Level - for updating the TARGET value
-!> \param colv_list ...
 !> \param dt ...
 !> \param motion_section ...
 !> \date 02.2008
 !> \author Teodoro Laino [tlaino] - University of Zurich
 ! **************************************************************************************************
-   SUBROUTINE shake_update_colv_low(colv_list, dt, motion_section)
-      TYPE(colvar_constraint_type), POINTER              :: colv_list(:)
+   SUBROUTINE shake_update_colv_targets(dt, motion_section)
       REAL(kind=dp), INTENT(in)                          :: dt
       TYPE(section_vals_type), POINTER                   :: motion_section
 
-      INTEGER                                            :: iconst, irep, n_rep
+      INTEGER                                            :: irep, n_rep
       LOGICAL                                            :: do_update_colvar, explicit
       REAL(KIND=dp)                                      :: clv_target, limit, new_clv_target, value
       TYPE(section_vals_type), POINTER                   :: collective_sections
@@ -595,13 +632,46 @@ CONTAINS
          END DO
       END IF
 
-      ! Update locally the value to each processor
+   END SUBROUTINE shake_update_colv_targets
+
+   SUBROUTINE shake_update_colv_low(colv_list, dt, motion_section, initialize)
+      TYPE(colvar_constraint_type), POINTER              :: colv_list(:)
+      REAL(KIND=dp), INTENT(IN)                          :: dt
+      TYPE(section_vals_type), POINTER                   :: motion_section
+      LOGICAL, INTENT(IN), OPTIONAL                      :: initialize
+
+      INTEGER                                            :: iconst
+      LOGICAL                                            :: explicit, initial
+      REAL(KIND=dp)                                      :: limit, next_target, old_target, speed
+      TYPE(section_vals_type), POINTER                   :: collective_sections
+
+      initial = .FALSE.
+      IF (PRESENT(initialize)) initial = initialize
+      collective_sections => section_vals_get_subs_vals(motion_section, "CONSTRAINT%COLLECTIVE")
       DO iconst = 1, SIZE(colv_list)
-         ! Update local to each processor
+         colv_list(iconst)%target_increment = 0.0_dp
+         colv_list(iconst)%target_velocity = 0.0_dp
          IF (colv_list(iconst)%expected_value_growth_speed == 0.0_dp) CYCLE
+         old_target = colv_list(iconst)%expected_value
          CALL section_vals_val_get(collective_sections, "TARGET", &
-                                   r_val=colv_list(iconst)%expected_value, &
+                                   r_val=next_target, &
                                    i_rep_section=colv_list(iconst)%inp_seq_num)
+         IF (initial) THEN
+            speed = colv_list(iconst)%expected_value_growth_speed
+            next_target = old_target + speed*dt
+            CALL section_vals_val_get(collective_sections, "TARGET_LIMIT", explicit=explicit, &
+                                      i_rep_section=colv_list(iconst)%inp_seq_num)
+            IF (explicit) THEN
+               CALL section_vals_val_get(collective_sections, "TARGET_LIMIT", r_val=limit, &
+                                         i_rep_section=colv_list(iconst)%inp_seq_num)
+               IF (speed > 0.0_dp) next_target = MIN(next_target, limit)
+               IF (speed < 0.0_dp) next_target = MAX(next_target, limit)
+            END IF
+         ELSE
+            colv_list(iconst)%expected_value = next_target
+            colv_list(iconst)%target_increment = next_target - old_target
+         END IF
+         colv_list(iconst)%target_velocity = (next_target - old_target)/dt
       END DO
 
    END SUBROUTINE shake_update_colv_low
@@ -645,22 +715,25 @@ CONTAINS
       IF (irattle == 1) THEN
          DO iconst = 1, SIZE(colv_list)
             IF (colv_list(iconst)%restraint%active) CYCLE
+            lcolv(iconst)%lambda_rattle = lcolv(iconst)%lambda
             ! Update colvar_old
             CALL colvar_eval_mol_f(lcolv(iconst)%colvar_old, cell, &
                                    particles=particle_set, fixd_list=fixd_list)
             ! Update velocities
             CALL update_con_colv(vel, dtby2, lcolv(iconst), &
-                                 lambda=lcolv(iconst)%lambda, &
+                                 lambda=lcolv(iconst)%lambda_rattle, &
                                  imass=imass)
          END DO
       ELSE
          DO iconst = 1, SIZE(colv_list)
             IF (colv_list(iconst)%restraint%active) CYCLE
-            lcolv(iconst)%sigma = rattle_con_eval(lcolv(iconst)%colvar_old, vel)
+            lcolv(iconst)%sigma = rattle_con_eval(lcolv(iconst)%colvar_old, vel) - &
+                                  colv_list(iconst)%target_velocity
             fdotf_sum = eval_Jac_colvar(lcolv(iconst)%colvar_old, &
                                         lcolv(iconst)%colvar_old, imass=imass)
             del_lam = 2.0_dp*lcolv(iconst)%sigma/(dt*fdotf_sum)
-            lcolv(iconst)%lambda = lcolv(iconst)%lambda + del_lam
+            lcolv(iconst)%lambda_rattle = lcolv(iconst)%lambda_rattle + del_lam
+            lcolv(iconst)%lambda = lcolv(iconst)%lambda_rattle
 
             ! Update velocities
             CALL update_con_colv(vel, dtby2, lcolv(iconst), &
@@ -671,8 +744,10 @@ CONTAINS
 
       DO iconst = 1, SIZE(colv_list)
          IF (colv_list(iconst)%restraint%active) CYCLE
-         lcolv(iconst)%sigma = rattle_con_eval(lcolv(iconst)%colvar_old, vel)
-         max_sigma = MAX(ABS(lcolv(iconst)%sigma), max_sigma)
+         lcolv(iconst)%sigma = rattle_con_eval(lcolv(iconst)%colvar_old, vel) - &
+                               colv_list(iconst)%target_velocity
+         lcolv(iconst)%lambda = lcolv(iconst)%lambda_rattle
+         max_sigma = MAX(rattle_colv_residual(lcolv(iconst)%sigma, colv_list(iconst)), max_sigma)
       END DO
 
    END SUBROUTINE rattle_colv_low
@@ -722,13 +797,14 @@ CONTAINS
       IF (ishake == 1) THEN
          DO iconst = 1, SIZE(colv_list)
             IF (colv_list(iconst)%restraint%active) CYCLE
+            lcolv(iconst)%lambda_shake = lcolv(iconst)%lambda
             ! Update positions
             CALL update_con_colv(pos, dtsqby2, lcolv(iconst), &
-                                 lambda=lcolv(iconst)%lambda, &
+                                 lambda=lcolv(iconst)%lambda_shake, &
                                  roll=.TRUE., rmat=r_shake, imass=imass)
             ! Update velocities
             CALL update_con_colv(vel, dtby2, lcolv(iconst), &
-                                 lambda=lcolv(iconst)%lambda, &
+                                 lambda=lcolv(iconst)%lambda_shake, &
                                  roll=.TRUE., rmat=v_shake, imass=imass)
          END DO
       ELSE
@@ -743,7 +819,8 @@ CONTAINS
                                         lcolv(iconst)%colvar_old, roll=.TRUE., rmat=r_shake, &
                                         imass=imass)
             del_lam = 2.0_dp*lcolv(iconst)%sigma/(dt*dt*fdotf_sum)
-            lcolv(iconst)%lambda = lcolv(iconst)%lambda + del_lam
+            lcolv(iconst)%lambda_shake = lcolv(iconst)%lambda_shake + del_lam
+            lcolv(iconst)%lambda = lcolv(iconst)%lambda_shake
 
             ! Update positions
             CALL update_con_colv(pos, dtsqby2, lcolv(iconst), &
@@ -762,6 +839,7 @@ CONTAINS
                                 pos=pos, fixd_list=fixd_list)
          lcolv(iconst)%sigma = diff_colvar(lcolv(iconst)%colvar, &
                                            colv_list(iconst)%expected_value)
+         lcolv(iconst)%lambda = lcolv(iconst)%lambda_shake
          max_sigma = MAX(ABS(lcolv(iconst)%sigma), max_sigma)
       END DO
 
@@ -810,24 +888,27 @@ CONTAINS
       IF (irattle == 1) THEN
          DO iconst = 1, SIZE(colv_list)
             IF (colv_list(iconst)%restraint%active) CYCLE
+            lcolv(iconst)%lambda_rattle = lcolv(iconst)%lambda
             ! Update colvar_old
             CALL colvar_eval_mol_f(lcolv(iconst)%colvar_old, cell, &
                                    particles=particle_set, fixd_list=fixd_list)
             ! Update velocities
             CALL update_con_colv(vel, dtby2, lcolv(iconst), &
-                                 lambda=lcolv(iconst)%lambda, &
+                                 lambda=lcolv(iconst)%lambda_rattle, &
                                  imass=imass)
          END DO
       ELSE
          DO iconst = 1, SIZE(colv_list)
             IF (colv_list(iconst)%restraint%active) CYCLE
             lcolv(iconst)%sigma = rattle_con_eval(lcolv(iconst)%colvar_old, vel, &
-                                                  roll=.TRUE., veps=veps, rmat=r_rattle, particles=particle_set)
+                                                  roll=.TRUE., veps=veps, rmat=r_rattle, particles=particle_set) - &
+                                  colv_list(iconst)%target_velocity
             fdotf_sum = eval_Jac_colvar(lcolv(iconst)%colvar_old, &
                                         lcolv(iconst)%colvar_old, roll=.TRUE., &
                                         rmat=r_rattle, imass=imass)
             del_lam = 2.0_dp*lcolv(iconst)%sigma/(dt*fdotf_sum)
-            lcolv(iconst)%lambda = lcolv(iconst)%lambda + del_lam
+            lcolv(iconst)%lambda_rattle = lcolv(iconst)%lambda_rattle + del_lam
+            lcolv(iconst)%lambda = lcolv(iconst)%lambda_rattle
             ! Update velocities
             CALL update_con_colv(vel, dtby2, lcolv(iconst), &
                                  lambda=del_lam, &
@@ -838,11 +919,25 @@ CONTAINS
       DO iconst = 1, SIZE(colv_list)
          IF (colv_list(iconst)%restraint%active) CYCLE
          lcolv(iconst)%sigma = rattle_con_eval(lcolv(iconst)%colvar_old, vel, &
-                                               roll=.TRUE., veps=veps, rmat=r_rattle, particles=particle_set)
-         max_sigma = MAX(ABS(lcolv(iconst)%sigma), max_sigma)
+                                               roll=.TRUE., veps=veps, rmat=r_rattle, particles=particle_set) - &
+                               colv_list(iconst)%target_velocity
+         lcolv(iconst)%lambda = lcolv(iconst)%lambda_rattle
+         max_sigma = MAX(rattle_colv_residual(lcolv(iconst)%sigma, colv_list(iconst)), max_sigma)
       END DO
 
    END SUBROUTINE rattle_roll_colv_low
+
+   PURE FUNCTION rattle_colv_residual(sigma, definition) RESULT(residual)
+      REAL(KIND=dp), INTENT(IN)                          :: sigma
+      TYPE(colvar_constraint_type), INTENT(IN)           :: definition
+      REAL(KIND=dp)                                      :: residual
+
+      residual = ABS(sigma)
+      ! A slow imposed rate can be smaller than the legacy absolute velocity tolerance.
+      ! Require relative rate convergence too, including the zero-rate limit transition.
+      IF (definition%expected_value_growth_speed /= 0.0_dp) &
+         residual = MAX(residual, ABS(sigma/definition%expected_value_growth_speed))
+   END FUNCTION rattle_colv_residual
 
 ! **************************************************************************************************
 !> \brief Update position/velocities
@@ -958,7 +1053,7 @@ CONTAINS
 ! **************************************************************************************************
    FUNCTION rattle_con_eval(colvar, vel, roll, veps, rmat, particles) RESULT(res)
       TYPE(colvar_type), POINTER                         :: colvar
-      REAL(KIND=dp), INTENT(INOUT)                       :: vel(:, :)
+      REAL(KIND=dp), INTENT(IN)                          :: vel(:, :)
       LOGICAL, INTENT(IN), OPTIONAL                      :: roll
       REAL(KIND=dp), DIMENSION(:, :), INTENT(IN), &
          OPTIONAL                                        :: veps, rmat

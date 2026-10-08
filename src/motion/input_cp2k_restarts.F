@@ -11,10 +11,10 @@
 !>      01.2006 [created] Teodoro Laino
 ! **************************************************************************************************
 MODULE input_cp2k_restarts
-
    USE al_system_types,                 ONLY: al_system_type
    USE atomic_kind_list_types,          ONLY: atomic_kind_list_type
    USE averages_types,                  ONLY: average_quantities_type
+   USE blue_moon,                       ONLY: blue_moon_save_restart
    USE cp2k_info,                       ONLY: write_restart_header
    USE cp_linked_list_input,            ONLY: cp_sll_val_create,&
                                               cp_sll_val_get_length,&
@@ -347,6 +347,8 @@ CONTAINS
 
       work_section => section_vals_get_subs_vals(motion_section, "MD%AVERAGES%RESTART_AVERAGES")
       CALL section_vals_remove_values(work_section)
+      work_section => section_vals_get_subs_vals(motion_section, "CONSTRAINT%BLUE_MOON_RESTART")
+      CALL section_vals_remove_values(work_section)
 
       work_section => section_vals_get_subs_vals(motion_section, "MD%THERMOSTAT%NOSE%COORD")
       CALL section_vals_remove_values(work_section)
@@ -537,6 +539,7 @@ CONTAINS
       NULLIFY (particles)
       NULLIFY (subsys)
       IF (PRESENT(md_env)) THEN
+         CALL blue_moon_save_restart(md_env, motion_section)
          CALL get_md_env(md_env=md_env, &
                          thermostat_part=thermostat_part, &
                          thermostat_baro=thermostat_baro, &

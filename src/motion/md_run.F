@@ -16,7 +16,11 @@ MODULE md_run
    USE averages_types,                  ONLY: average_quantities_type
    USE barostat_types,                  ONLY: barostat_type,&
                                               create_barostat_type
+   USE blue_moon,                       ONLY: blue_moon_initialize,&
+                                              blue_moon_update,&
+                                              blue_moon_write
    USE cell_types,                      ONLY: cell_type
+   USE constraint_clv,                  ONLY: shake_update_colv_low
    USE cp_external_control,             ONLY: external_control
    USE cp_log_handling,                 ONLY: cp_get_default_logger,&
                                               cp_logger_get_default_io_unit,&
@@ -34,6 +38,7 @@ MODULE md_run
    USE force_env_methods,               ONLY: force_env_calc_energy_force
    USE force_env_types,                 ONLY: force_env_get,&
                                               force_env_type
+   USE force_env_utils,                 ONLY: force_env_rattle
    USE free_energy_methods,             ONLY: free_energy_evaluate
    USE free_energy_types,               ONLY: fe_env_create,&
                                               free_energy_type
@@ -79,6 +84,8 @@ MODULE md_run
                                               metadyn_integrator,&
                                               metadyn_write_colvar
    USE metadynamics_types,              ONLY: set_meta_env
+   USE molecule_kind_types,             ONLY: molecule_kind_type
+   USE molecule_types,                  ONLY: global_constraint_type
    USE particle_list_types,             ONLY: particle_list_type
    USE qs_environment_methods,          ONLY: qs_env_time_update
    USE reftraj_types,                   ONLY: create_reftraj,&
@@ -194,11 +201,12 @@ CONTAINS
 
       CHARACTER(LEN=80)                                  :: md_step_line
       CHARACTER(LEN=default_string_length)               :: my_act, my_pos
-      INTEGER                                            :: handle, i, istep, md_stride, &
-                                                            output_unit, run_type_id
+      INTEGER                                            :: blue_moon_unit, handle, i, istep, &
+                                                            md_stride, output_unit, run_type_id, &
+                                                            slow_growth_unit
       INTEGER, POINTER                                   :: itimes
-      LOGICAL                                            :: check, ehrenfest_md, save_mem, &
-                                                            should_stop, write_binary_restart_file
+      LOGICAL :: blue_moon_active, blue_moon_is_new, blue_moon_restored, check, ehrenfest_md, &
+         save_mem, should_stop, slow_growth_is_new, write_binary_restart_file
       REAL(KIND=dp)                                      :: dummy, time_iter_start, time_iter_stop
       REAL(KIND=dp), POINTER                             :: constant, time, used_time
       TYPE(atomic_kind_list_type), POINTER               :: atomic_kinds
@@ -314,6 +322,10 @@ CONTAINS
 
       CALL set_md_env(md_env=md_env, simpar=simpar, fe_env=fe_env, cell=cell, &
                       force_env=force_env)
+      CALL section_vals_val_get(md_section, "STEP_START_VAL", i_val=i)
+      CALL blue_moon_initialize(md_env, constraint_section, i, restored=blue_moon_restored, active=blue_moon_active)
+      IF (.NOT. blue_moon_restored .AND. simpar%constraint) &
+         CALL initialize_moving_colvars(force_env, motion_section, simpar)
 
       ! Possibly initialize Wiener processes
       ![NB] Tested again within create_wiener_process.  Why??
@@ -503,18 +515,41 @@ CONTAINS
                                        "LAGRANGE_MULTIPLIERS", extension=".LagrangeMultLog", log_filename=.FALSE.)
          simpar%dump_lm = BTEST(cp_print_key_should_output(logger%iter_info, constraint_section, &
                                                            "LAGRANGE_MULTIPLIERS"), cp_p_file)
+         blue_moon_unit = 0
+         slow_growth_unit = 0
+         blue_moon_is_new = .FALSE.
+         slow_growth_is_new = .FALSE.
+         IF (blue_moon_active) THEN
+            blue_moon_unit = cp_print_key_unit_nr(logger, constraint_section, "BLUE_MOON", &
+                                                  extension=".blueMoonLog", log_filename=.FALSE., &
+                                                  is_new_file=blue_moon_is_new)
+            slow_growth_unit = cp_print_key_unit_nr(logger, constraint_section, "COLVAR_SLOW_GROWTH", &
+                                                    extension=".colvarSlowGrowthLog", log_filename=.FALSE., &
+                                                    is_new_file=slow_growth_is_new)
+         END IF
 
          ! Update temperature for thermal regions and thermostat regions
          CALL update_expected_temperature(md_env)
 
          ! Velocity Verlet Integrator
          CALL velocity_verlet(md_env, globenv)
+         CALL blue_moon_update(md_env, itimes)
+         CALL blue_moon_write(md_env, constraint_section, "BLUE_MOON", &
+                              blue_moon_unit, blue_moon_is_new, time, itimes)
+         CALL blue_moon_write(md_env, constraint_section, "COLVAR_SLOW_GROWTH", &
+                              slow_growth_unit, slow_growth_is_new, time, itimes)
 
          ! Close Shake output if requested...
          CALL cp_print_key_finished_output(simpar%info_constraint, logger, &
                                            constraint_section, "CONSTRAINT_INFO")
          CALL cp_print_key_finished_output(simpar%lagrange_multipliers, logger, &
                                            constraint_section, "LAGRANGE_MULTIPLIERS")
+         IF (blue_moon_active) THEN
+            CALL cp_print_key_finished_output(blue_moon_unit, logger, &
+                                              constraint_section, "BLUE_MOON")
+            CALL cp_print_key_finished_output(slow_growth_unit, logger, &
+                                              constraint_section, "COLVAR_SLOW_GROWTH")
+         END IF
 
          ! Free Energy calculation
          CALL free_energy_evaluate(md_env, should_stop, free_energy_section)
@@ -590,5 +625,32 @@ CONTAINS
       CALL timestop(handle)
 
    END SUBROUTINE qs_mol_dyn_low
+
+   SUBROUTINE initialize_moving_colvars(force_env, motion_section, simpar)
+      TYPE(force_env_type), POINTER                      :: force_env
+      TYPE(section_vals_type), POINTER                   :: motion_section
+      TYPE(simpar_type), POINTER                         :: simpar
+
+      INTEGER                                            :: i
+      LOGICAL                                            :: moving
+      TYPE(cp_subsys_type), POINTER                      :: subsys
+      TYPE(global_constraint_type), POINTER              :: gci
+      TYPE(molecule_kind_type), POINTER                  :: kinds(:)
+
+      CALL force_env_get(force_env, subsys=subsys)
+      CALL cp_subsys_get(subsys, molecule_kind_set=kinds, gci=gci)
+      moving = .FALSE.
+      DO i = 1, SIZE(kinds)
+         IF (.NOT. ASSOCIATED(kinds(i)%colv_list)) CYCLE
+         CALL shake_update_colv_low(kinds(i)%colv_list, simpar%dt, motion_section, initialize=.TRUE.)
+         moving = moving .OR. ANY(kinds(i)%colv_list%expected_value_growth_speed /= 0.0_dp)
+      END DO
+      IF (ASSOCIATED(gci%colv_list)) THEN
+         CALL shake_update_colv_low(gci%colv_list, simpar%dt, motion_section, initialize=.TRUE.)
+         moving = moving .OR. ANY(gci%colv_list%expected_value_growth_speed /= 0.0_dp)
+      END IF
+      gci%joint_colvar_checks = gci%joint_colvar_checks .OR. moving
+      IF (moving) CALL force_env_rattle(force_env, dt=simpar%dt, shake_tol=simpar%shake_tol, reset=.TRUE.)
+   END SUBROUTINE initialize_moving_colvars
 
 END MODULE md_run

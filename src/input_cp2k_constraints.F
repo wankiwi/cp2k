@@ -155,7 +155,106 @@ CONTAINS
       CALL section_add_subsection(section, print_key)
       CALL section_release(print_key)
 
+      CALL cp_print_key_section_create( &
+         print_key, __LOCATION__, "blue_moon", &
+         description="Prints VASP-style Blue Moon/TI diagnostics for COLVAR constraints during MD.", &
+         print_level=high_print_level, filename="", common_iter_levels=1, unit_str="internal_cp2k")
+      CALL keyword_create(keyword, __LOCATION__, name="CV_UNIT", &
+                          description="Unit used for collective-variable values in the Blue Moon output. "// &
+                          "The default input uses the unit specified on TARGET.", &
+                          usage="CV_UNIT input", default_c_val="input")
+      CALL section_add_keyword(print_key, keyword)
+      CALL keyword_release(keyword)
+      CALL keyword_create(keyword, __LOCATION__, name="TIME_UNIT", &
+                          description="Unit used for time in the Blue Moon output.", &
+                          usage="TIME_UNIT fs", default_c_val="fs")
+      CALL section_add_keyword(print_key, keyword)
+      CALL keyword_release(keyword)
+      CALL keyword_create(keyword, __LOCATION__, name="ENERGY_UNIT", &
+                          description="Unit used for Blue Moon free-energy quantities.", &
+                          usage="ENERGY_UNIT eV", default_c_val="hartree")
+      CALL section_add_keyword(print_key, keyword)
+      CALL keyword_release(keyword)
+      CALL section_add_subsection(section, print_key)
+      CALL section_release(print_key)
+
+      CALL cp_print_key_section_create( &
+         print_key, __LOCATION__, "colvar_slow_growth", &
+         description="Alias print key for slow-growth COLVAR Blue Moon/TI diagnostics.", &
+         print_level=high_print_level, filename="", common_iter_levels=1, unit_str="internal_cp2k")
+      CALL keyword_create(keyword, __LOCATION__, name="CV_UNIT", &
+                          description="Unit used for collective-variable values in the slow-growth output. "// &
+                          "The default input uses the unit specified on TARGET.", &
+                          usage="CV_UNIT input", default_c_val="input")
+      CALL section_add_keyword(print_key, keyword)
+      CALL keyword_release(keyword)
+      CALL keyword_create(keyword, __LOCATION__, name="TIME_UNIT", &
+                          description="Unit used for time in the slow-growth output.", &
+                          usage="TIME_UNIT fs", default_c_val="fs")
+      CALL section_add_keyword(print_key, keyword)
+      CALL keyword_release(keyword)
+      CALL keyword_create(keyword, __LOCATION__, name="ENERGY_UNIT", &
+                          description="Unit used for slow-growth free-energy quantities.", &
+                          usage="ENERGY_UNIT eV", default_c_val="hartree")
+      CALL section_add_keyword(print_key, keyword)
+      CALL keyword_release(keyword)
+      CALL section_add_subsection(section, print_key)
+      CALL section_release(print_key)
+
+      CALL create_blue_moon_restart_section(subsection)
+      CALL section_add_subsection(section, subsection)
+      CALL section_release(subsection)
+
    END SUBROUTINE create_constraint_section
+
+   SUBROUTINE create_blue_moon_restart_section(section)
+      TYPE(section_type), POINTER                        :: section
+
+      TYPE(keyword_type), POINTER                        :: keyword
+      TYPE(section_type), POINTER                        :: entry
+
+      NULLIFY (keyword, ENTRY)
+      CALL section_create(section, __LOCATION__, name="BLUE_MOON_RESTART", &
+                          description="Automatically generated MD Blue Moon state; all numeric state is in native CP2K units.", &
+                          repeats=.FALSE.)
+      CALL keyword_create(keyword, __LOCATION__, name="VERSION", default_i_val=1, &
+                          description="Restart format version.")
+      CALL section_add_keyword(section, keyword)
+      CALL keyword_release(keyword)
+      CALL keyword_create(keyword, __LOCATION__, name="STEP", default_i_val=-1, &
+                          description="Last completed MD step.")
+      CALL section_add_keyword(section, keyword)
+      CALL keyword_release(keyword)
+      CALL keyword_create(keyword, __LOCATION__, name="LOG_WEIGHT", default_r_val=0.0_dp, &
+                          description="Log of joint inverse-square-root mass metric in native CV units per Angstrom and amu.")
+      CALL section_add_keyword(section, keyword)
+      CALL keyword_release(keyword)
+      CALL section_create(ENTRY, __LOCATION__, name="CONSTRAINT", repeats=.TRUE., &
+                          description="Stable COLVAR identifier and mechanical pulling-work state.")
+      CALL keyword_create(keyword, __LOCATION__, name="ID", type_of_var=integer_t, n_var=3, &
+                          description="Input COLLECTIVE index, global molecule index (zero for global), local constraint index.")
+      CALL section_add_keyword(ENTRY, keyword)
+      CALL keyword_release(keyword)
+      CALL keyword_create(keyword, __LOCATION__, name="ATOMS", type_of_var=integer_t, n_var=-1, &
+                          description="Ordered global atom indices in the COLVAR.")
+      CALL section_add_keyword(ENTRY, keyword)
+      CALL keyword_release(keyword)
+      CALL keyword_create(keyword, __LOCATION__, name="CV_TYPE", default_i_val=0, &
+                          description="Internal COLVAR type ID.")
+      CALL section_add_keyword(ENTRY, keyword)
+      CALL keyword_release(keyword)
+      CALL keyword_create(keyword, __LOCATION__, name="CV_UNIT", default_c_val="internal_cp2k", &
+                          description="Original inherited TARGET unit, retained across restarts.")
+      CALL section_add_keyword(ENTRY, keyword)
+      CALL keyword_release(keyword)
+      CALL keyword_create(keyword, __LOCATION__, name="STATE", type_of_var=real_t, n_var=9, &
+                          unit_str="internal_cp2k", description="Previous target, W, dW, value, target, SHAKE lambda, "// &
+                          "RATTLE lambda, GkT, actual target velocity; native CP2K units.")
+      CALL section_add_keyword(ENTRY, keyword)
+      CALL keyword_release(keyword)
+      CALL section_add_subsection(section, ENTRY)
+      CALL section_release(ENTRY)
+   END SUBROUTINE create_blue_moon_restart_section
 
 ! **************************************************************************************************
 !> \brief Create the restart section for colvar restraints
