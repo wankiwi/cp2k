@@ -1,8 +1,35 @@
 &GLOBAL
+  PRINT_LEVEL LOW
   PROJECT nacl_forward
   RUN_TYPE MD
-  PRINT_LEVEL LOW
 &END GLOBAL
+
+&MOTION
+  &CONSTRAINT
+    SHAKE_TOLERANCE 1.0E-10
+    &BLUE_MOON
+      ENERGY_UNIT eV
+      FILENAME __STD_OUT__
+      TIME_UNIT fs
+      &EACH
+        MD 1
+      &END EACH
+    &END BLUE_MOON
+    &COLLECTIVE
+      COLVAR 1
+      INTERMOLECULAR
+      TARGET [angstrom] 2.50000000
+      TARGET_GROWTH [angstrom*fs^-1] 0.0005
+      TARGET_LIMIT [angstrom] 10.00000000
+    &END COLLECTIVE
+  &END CONSTRAINT
+  &MD
+    ENSEMBLE NVE
+    STEPS 20
+    TEMPERATURE 0.0
+    TIMESTEP 1.0
+  &END MD
+&END MOTION
 
 &FORCE_EVAL
   METHOD FIST
@@ -16,29 +43,29 @@
         ATOM Cl
         CHARGE -1.0
       &END CHARGE
-      &SPLINE
-        RCUT_NB [angstrom] 20.0
-      &END SPLINE
       &NONBONDED
         &LENNARD-JONES
           ATOMS Na Na
           EPSILON [eV] 0.0
-          SIGMA [angstrom] 1.0
           RCUT [angstrom] 20.0
+          SIGMA [angstrom] 1.0
         &END LENNARD-JONES
         &LENNARD-JONES
           ATOMS Na Cl
           EPSILON [eV] 0.0
-          SIGMA [angstrom] 1.0
           RCUT [angstrom] 20.0
+          SIGMA [angstrom] 1.0
         &END LENNARD-JONES
         &LENNARD-JONES
           ATOMS Cl Cl
           EPSILON [eV] 0.0
-          SIGMA [angstrom] 1.0
           RCUT [angstrom] 20.0
+          SIGMA [angstrom] 1.0
         &END LENNARD-JONES
       &END NONBONDED
+      &SPLINE
+        RCUT_NB [angstrom] 20.0
+      &END SPLINE
     &END FORCEFIELD
     &POISSON
       &EWALD
@@ -51,42 +78,15 @@
       ABC 40.0 40.0 40.0
       PERIODIC XYZ
     &END CELL
-    &TOPOLOGY
-      COORD_FILE_FORMAT XYZ
-      COORD_FILE_NAME nacl.xyz
-      CONN_FILE_FORMAT OFF
-    &END TOPOLOGY
     &COLVAR
       &DISTANCE
         ATOMS 1 2
       &END DISTANCE
     &END COLVAR
+    &TOPOLOGY
+      CONN_FILE_FORMAT OFF
+      COORD_FILE_FORMAT XYZ
+      COORD_FILE_NAME nacl.xyz
+    &END TOPOLOGY
   &END SUBSYS
 &END FORCE_EVAL
-
-&MOTION
-  &MD
-    ENSEMBLE NVE
-    STEPS 20
-    TIMESTEP 1.0
-    TEMPERATURE 0.0
-  &END MD
-  &CONSTRAINT
-    SHAKE_TOLERANCE 1.0E-10
-    &COLLECTIVE
-      COLVAR 1
-      INTERMOLECULAR
-      TARGET [angstrom] 2.50000000
-      TARGET_GROWTH [angstrom*fs^-1] 0.0005
-      TARGET_LIMIT [angstrom] 10.00000000
-    &END COLLECTIVE
-    &BLUE_MOON
-      FILENAME __STD_OUT__
-      &EACH
-        MD 1
-      &END EACH
-      TIME_UNIT fs
-      ENERGY_UNIT eV
-    &END BLUE_MOON
-  &END CONSTRAINT
-&END MOTION

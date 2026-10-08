@@ -207,6 +207,10 @@ CONTAINS
 
    END SUBROUTINE create_constraint_section
 
+! **************************************************************************************************
+!> \brief ...
+!> \param section ...
+! **************************************************************************************************
    SUBROUTINE create_blue_moon_restart_section(section)
       TYPE(section_type), POINTER                        :: section
 

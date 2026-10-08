@@ -9,7 +9,6 @@ from pathlib import Path
 import re
 import subprocess
 
-
 ROOT = Path(__file__).resolve().parents[2]
 GENERATOR = Path(__file__).with_name("prepare_inputs.py")
 spec = importlib.util.spec_from_file_location("nacl_input_generator", GENERATOR)

@@ -42,9 +42,9 @@ def main():
         "sha256": hashlib.sha256(binary.read_bytes()).hexdigest(),
         "mpi_ranks": args.mpi_ranks,
         "assertions": {},
-        "process_personality": personality.read_text().strip()
-        if personality.exists()
-        else None,
+        "process_personality": (
+            personality.read_text().strip() if personality.exists() else None
+        ),
         "lsan_options": env.get("LSAN_OPTIONS", ""),
         "private_library_sha256": {
             p.name: hashlib.sha256(p.read_bytes()).hexdigest()

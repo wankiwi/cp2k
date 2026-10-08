@@ -62,7 +62,7 @@ MODULE input_val_types
 ! **************************************************************************************************
    TYPE val_type
       INTEGER :: ref_count = 0, type_of_var = no_t
-      CHARACTER(len=default_string_length) :: unit_str
+      CHARACTER(len=default_string_length) :: unit_str = ""
       LOGICAL, DIMENSION(:), POINTER :: l_val => NULL()
       INTEGER, DIMENSION(:), POINTER :: i_val => NULL()
       CHARACTER(len=default_string_length), DIMENSION(:), POINTER :: &
@@ -94,6 +94,7 @@ CONTAINS
 !> \param lc_vals ...
 !> \param lc_vals_ptr ...
 !> \param enum the enumaration type this value is using
+!> \param unit_str ...
 !> \author fawzi
 !> \note
 !>      using an enumeration only i_val/i_vals/i_vals_ptr are accepted
@@ -327,6 +328,7 @@ CONTAINS
 !>        it might be longet than default_string_length)
 !> \param type_of_var ...
 !> \param enum ...
+!> \param unit_str ...
 !> \author fawzi
 !> \note
 !>      using an enumeration only i_val/i_vals/i_vals_ptr are accepted

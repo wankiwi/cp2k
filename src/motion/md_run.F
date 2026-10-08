@@ -324,8 +324,9 @@ CONTAINS
                       force_env=force_env)
       CALL section_vals_val_get(md_section, "STEP_START_VAL", i_val=i)
       CALL blue_moon_initialize(md_env, constraint_section, i, restored=blue_moon_restored, active=blue_moon_active)
-      IF (.NOT. blue_moon_restored .AND. simpar%constraint) &
+      IF (.NOT. blue_moon_restored .AND. simpar%constraint) THEN
          CALL initialize_moving_colvars(force_env, motion_section, simpar)
+      END IF
 
       ! Possibly initialize Wiener processes
       ![NB] Tested again within create_wiener_process.  Why??
@@ -626,6 +627,12 @@ CONTAINS
 
    END SUBROUTINE qs_mol_dyn_low
 
+! **************************************************************************************************
+!> \brief ...
+!> \param force_env ...
+!> \param motion_section ...
+!> \param simpar ...
+! **************************************************************************************************
    SUBROUTINE initialize_moving_colvars(force_env, motion_section, simpar)
       TYPE(force_env_type), POINTER                      :: force_env
       TYPE(section_vals_type), POINTER                   :: motion_section

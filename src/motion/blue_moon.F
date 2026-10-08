@@ -56,6 +56,14 @@ MODULE blue_moon
    PUBLIC :: blue_moon_initialize, blue_moon_update, blue_moon_write, blue_moon_save_restart, blue_moon_accumulate
 CONTAINS
 
+! **************************************************************************************************
+!> \brief ...
+!> \param md_env ...
+!> \param constraint_section ...
+!> \param start_step ...
+!> \param restored ...
+!> \param active ...
+! **************************************************************************************************
    SUBROUTINE blue_moon_initialize(md_env, constraint_section, start_step, restored, active)
       TYPE(md_environment_type), POINTER :: md_env
       TYPE(section_vals_type), POINTER :: constraint_section
@@ -122,8 +130,9 @@ CONTAINS
             CALL add_entries(molecules(m)%lci%lcolv, kinds(k)%colv_list, kinds(k)%fixd_list, m, owned)
          END DO
       END DO
-      IF (ASSOCIATED(gci%lcolv)) &
+      IF (ASSOCIATED(gci%lcolv)) THEN
          CALL add_entries(gci%lcolv, gci%colv_list, gci%fixd_list, 0, para_env%is_source())
+      END IF
       ! Input order followed by global molecule ID is independent of MPI ownership.
       DO i = 2, n
          tmp = state%entries(i)
@@ -210,6 +219,14 @@ CONTAINS
       state%initialized = .TRUE.
       IF (PRESENT(restored)) restored = state%restored
    CONTAINS
+! **************************************************************************************************
+!> \brief ...
+!> \param local ...
+!> \param definitions ...
+!> \param fixed ...
+!> \param molecule_id ...
+!> \param mine ...
+! **************************************************************************************************
       SUBROUTINE add_entries(local, definitions, fixed, molecule_id, mine)
       TYPE(local_colvar_constraint_type), POINTER        :: local(:)
       TYPE(colvar_constraint_type), POINTER              :: definitions(:)
@@ -238,9 +255,15 @@ CONTAINS
             state%entries(n)%target = definitions(a)%expected_value
             state%entries(n)%value = local(a)%colvar%ss
          END DO
-      END SUBROUTINE
+      END SUBROUTINE add_entries
    END SUBROUTINE blue_moon_initialize
 
+! **************************************************************************************************
+!> \brief ...
+!> \param a ...
+!> \param b ...
+!> \return ...
+! **************************************************************************************************
    FUNCTION precedes(a, b) RESULT(before)
       TYPE(blue_moon_entry_type), INTENT(IN) :: a, b
       INTEGER :: ai, bi
@@ -250,8 +273,13 @@ CONTAINS
       before = ai < bi
       IF (ai == bi) before = a%molecule_index < b%molecule_index
       IF (ai == bi .AND. a%molecule_index == b%molecule_index) before = a%local_index < b%local_index
-   END FUNCTION
+   END FUNCTION precedes
 
+! **************************************************************************************************
+!> \brief ...
+!> \param md_env ...
+!> \param state ...
+! **************************************************************************************************
    SUBROUTINE rebind_entries(md_env, state)
       TYPE(md_environment_type), POINTER                 :: md_env
       TYPE(blue_moon_state_type), INTENT(INOUT)          :: state
@@ -302,8 +330,9 @@ CONTAINS
             state%entries(i)%fixed => molecules(m)%molecule_kind%fixd_list
             k = molecules(m)%molecule_kind%kind_number
             state%entries(i)%owned = .FALSE.
-            IF (local_molecules%n_el(k) > 0) &
+            IF (local_molecules%n_el(k) > 0) THEN
                state%entries(i)%owned = ANY(local_molecules%list(k)%array == m)
+            END IF
          END IF
          IF (state%entries(i)%definition%restraint%active .OR. &
              state%entries(i)%definition%inp_seq_num /= state%entries(i)%input_index .OR. &
@@ -323,6 +352,10 @@ CONTAINS
       IF (ANY(owners /= 1)) CPABORT("Blue Moon constraint must have exactly one MPI owner")
    END SUBROUTINE rebind_entries
 
+! **************************************************************************************************
+!> \brief ...
+!> \param md_env ...
+! **************************************************************************************************
    SUBROUTINE blue_moon_accumulate(md_env)
       TYPE(md_environment_type), POINTER                 :: md_env
 
@@ -353,6 +386,11 @@ CONTAINS
       state%work_pending = .TRUE.
    END SUBROUTINE blue_moon_accumulate
 
+! **************************************************************************************************
+!> \brief ...
+!> \param md_env ...
+!> \param step ...
+! **************************************************************************************************
    SUBROUTINE blue_moon_update(md_env, step)
       TYPE(md_environment_type), POINTER                 :: md_env
       INTEGER, INTENT(IN)                                :: step
@@ -401,6 +439,14 @@ CONTAINS
       state%work_pending = .FALSE.
    END SUBROUTINE blue_moon_update
 
+! **************************************************************************************************
+!> \brief ...
+!> \param state ...
+!> \param particles ...
+!> \param cell ...
+!> \param pos ...
+!> \param bmat ...
+! **************************************************************************************************
    SUBROUTINE evaluate(state, particles, cell, pos, bmat)
       TYPE(blue_moon_state_type), INTENT(IN)             :: state
       TYPE(particle_type), POINTER                       :: particles(:)
@@ -422,8 +468,15 @@ CONTAINS
             bmat(i, :, a) = bmat(i, :, a) + state%entries(i)%local%colvar%dsdr(:, j)/angstrom_scale
          END DO
       END DO
-   END SUBROUTINE
+   END SUBROUTINE evaluate
 
+! **************************************************************************************************
+!> \brief ...
+!> \param bmat ...
+!> \param masses ...
+!> \param inverse ...
+!> \param logdet ...
+! **************************************************************************************************
    SUBROUTINE metric(bmat, masses, inverse, logdet)
       REAL(KIND=dp), INTENT(IN)                          :: bmat(:, :, :), masses(:)
       REAL(KIND=dp), INTENT(OUT)                         :: inverse(:, :), logdet
@@ -457,8 +510,9 @@ CONTAINS
       CALL dpotrf('U', n, inverse, n, info)
       IF (info /= 0) CPABORT("Dependent Blue Moon constraints: mass metric is not positive definite")
       CALL dpocon('U', n, inverse, n, norm, rcond, work, iwork, info)
-      IF (info /= 0 .OR. rcond < 100.0_dp*EPSILON(1.0_dp)) &
+      IF (info /= 0 .OR. rcond < 100.0_dp*EPSILON(1.0_dp)) THEN
          CPABORT("Dependent or ill-conditioned Blue Moon constraints")
+      END IF
       logdet = 2.0_dp*SUM(LOG(scales))
       DO i = 1, n
          logdet = logdet + 2.0_dp*LOG(inverse(i, i))
@@ -469,8 +523,17 @@ CONTAINS
             inverse(i, j) = inverse(i, j)/scales(i)/scales(j)
          END DO
       END DO
-   END SUBROUTINE
+   END SUBROUTINE metric
 
+! **************************************************************************************************
+!> \brief ...
+!> \param state ...
+!> \param particles ...
+!> \param cell ...
+!> \param kbt ...
+!> \param log_weight ...
+!> \param gkt ...
+! **************************************************************************************************
    SUBROUTINE joint_metric(state, particles, cell, kbt, log_weight, gkt)
       TYPE(blue_moon_state_type), INTENT(IN)             :: state
       TYPE(particle_type), POINTER                       :: particles(:)
@@ -519,8 +582,13 @@ CONTAINS
          particles(a)%r = pos(:, a)
       END DO
       gkt = 0.5_dp*kbt*MATMUL(inverse, contraction)
-   END SUBROUTINE
+   END SUBROUTINE joint_metric
 
+! **************************************************************************************************
+!> \brief ...
+!> \param ENTRY ...
+!> \return ...
+! **************************************************************************************************
    FUNCTION native_cv_label(ENTRY) RESULT(label)
       TYPE(blue_moon_entry_type), INTENT(IN)             :: entry
       CHARACTER(LEN=default_string_length)               :: label
@@ -535,8 +603,13 @@ CONTAINS
       CASE DEFAULT
          label = "internal_cp2k"
       END SELECT
-   END FUNCTION
+   END FUNCTION native_cv_label
 
+! **************************************************************************************************
+!> \brief ...
+!> \param ENTRY ...
+!> \param unit ...
+! **************************************************************************************************
    SUBROUTINE validate_cv_unit(ENTRY, unit)
       TYPE(blue_moon_entry_type), INTENT(IN)             :: entry
       CHARACTER(LEN=*), INTENT(IN)                       :: unit
@@ -562,8 +635,13 @@ CONTAINS
       END IF
       CALL cp_unit_release(ref)
       CALL cp_unit_release(candidate)
-   END SUBROUTINE
+   END SUBROUTINE validate_cv_unit
 
+! **************************************************************************************************
+!> \brief ...
+!> \param reference ...
+!> \param unit ...
+! **************************************************************************************************
    SUBROUTINE validate_display_unit(reference, unit)
       CHARACTER(LEN=*), INTENT(IN)                       :: reference, unit
 
@@ -577,8 +655,18 @@ CONTAINS
       END IF
       CALL cp_unit_release(ref)
       CALL cp_unit_release(candidate)
-   END SUBROUTINE
+   END SUBROUTINE validate_display_unit
 
+! **************************************************************************************************
+!> \brief ...
+!> \param md_env ...
+!> \param constraint_section ...
+!> \param print_key_name ...
+!> \param unit_nr ...
+!> \param is_new_file ...
+!> \param time ...
+!> \param step ...
+! **************************************************************************************************
    SUBROUTINE blue_moon_write(md_env, constraint_section, print_key_name, unit_nr, is_new_file, time, step)
       TYPE(md_environment_type), POINTER                 :: md_env
       TYPE(section_vals_type), POINTER                   :: constraint_section
@@ -635,8 +723,9 @@ CONTAINS
          IF (i > 1) product = product//"*"
          product = product//TRIM(labels(i))
       END DO
-      IF (log_weight > LOG(HUGE(1.0_dp)) .OR. log_weight < LOG(TINY(1.0_dp))) &
+      IF (log_weight > LOG(HUGE(1.0_dp)) .OR. log_weight < LOG(TINY(1.0_dp))) THEN
          CPABORT("Blue Moon output metric weight is outside representable range")
+      END IF
       weight = EXP(log_weight)
       WRITE (count, '(I0)') n
       metric_unit = "angstrom^"//TRIM(count)//"*amu^("//TRIM(count)//"/2)/("//product//")"
@@ -679,6 +768,11 @@ CONTAINS
       END DO
    END SUBROUTINE blue_moon_write
 
+! **************************************************************************************************
+!> \brief ...
+!> \param md_env ...
+!> \param motion_section ...
+! **************************************************************************************************
    SUBROUTINE blue_moon_save_restart(md_env, motion_section)
       TYPE(md_environment_type), POINTER                 :: md_env
       TYPE(section_vals_type), POINTER                   :: motion_section

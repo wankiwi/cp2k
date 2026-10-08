@@ -92,5 +92,94 @@
     }
   ],
   "NaCl_growth_rate_manifest_sha256": "2ca1fd05f947554d6c4e4a8ab288a5a43280ea3eb6cfc64385328283a6ddc897",
-  "NaCl_growth_rate_study_receipt_sha256": "35cc18ea1c0cb98cee04f55d345a9e678ed1cb81cdb1c4bc8470b8489815cecd"
+  "NaCl_growth_rate_study_receipt_sha256": "35cc18ea1c0cb98cee04f55d345a9e678ed1cb81cdb1c4bc8470b8489815cecd",
+  "publication_corrections": {
+    "long_trajectory_solver_source_patch_sha256": "e256e259c839bc7d72b477889ad9599bc50109da0bfe41a812cb23f476cd9da4",
+    "published_solver_source_patch_sha256": "2cec52c986c0dcffbedee2520d31472b32228b6a205bc5cb1ed521e48a89e516",
+    "changes": [
+      "CP2K documentation and formatting conventions, named procedure/type endings and equivalent block IF spelling",
+      "Default unit_str initialization to the same empty string already set by val_create"
+    ],
+    "long_trajectory_data_and_exports_unchanged": true,
+    "input_formatting": [
+      {
+        "path": "tests/Fist/regtest-blue-moon/nacl_fixed.inp",
+        "executed_input_sha256": "12cc2601bf3833d223a62cf57b5bcf83accc2c4891b0de6cf82114e9b87fcaba",
+        "formatted_input_sha256": "09355cfba25633d998794f377cbc216e0df918cdfebebe86d63a5e862a059d3c",
+        "settings_unchanged": true
+      },
+      {
+        "path": "tests/Fist/regtest-blue-moon/nacl_forward.inp",
+        "executed_input_sha256": "79093f4aa9f4f53da6c9b8b5462c1b84475992cea1f8363f4b4f7f90c85a0f9a",
+        "formatted_input_sha256": "d83438b8f7b835bb59f16a4d7f9b3dbf271da084cd38836cad6f35db693e0a93",
+        "settings_unchanged": true
+      },
+      {
+        "path": "tests/Fist/regtest-blue-moon/nacl_reverse.inp",
+        "executed_input_sha256": "a8c9135691b8f368fdbf9e36d14962b15d75499f37b99c81489e6981dad24925",
+        "formatted_input_sha256": "6929b99c31ad67f9257cd9fa460c2198ddcf6412007847d88df858434f55f419",
+        "settings_unchanged": true
+      },
+      {
+        "path": "tests/Fist/regtest-blue-moon/nacl_slow_default_tolerance.inp",
+        "executed_input_sha256": "afdf7865e50c06b67d09f050f685ca217a80bf702f7fca313a20428c8a0d7e78",
+        "formatted_input_sha256": "35850afbae9abf2dbaf0fdf7dbc04ea57beda36e3e1805df4755d0bf957e4e55",
+        "settings_unchanged": true
+      },
+      {
+        "path": "validation/blue_moon/nacl_growth_rate_controls/growth_0p00025_A_per_fs/NaCl_fixed.inp",
+        "executed_input_sha256": "eabd6fc40d15e6130961fac7c247aabc005c18d992a601188e69f531e5268aa1",
+        "formatted_input_sha256": "3f51336b6e4c74f6cd437e0667ad0baa72ba40947cebb41b907b0acadf87e9c2",
+        "settings_unchanged": true
+      },
+      {
+        "path": "validation/blue_moon/nacl_growth_rate_controls/growth_0p00025_A_per_fs/NaCl_master.inp",
+        "executed_input_sha256": "13b788fd11095aaee714da16c1d953773419da1d68f0e829dd7b6b9f2c852743",
+        "formatted_input_sha256": "9f606705ff86e0de0b8d56690b20c815fd0e82c0e989d7b7bcd196734c43f9eb",
+        "settings_unchanged": true
+      },
+      {
+        "path": "validation/blue_moon/nacl_growth_rate_controls/growth_0p0005_A_per_fs/NaCl_fixed.inp",
+        "executed_input_sha256": "991bef496e51d9c97fe4bf9b273de3323ea0a5fd3f4b3e73f2bd1c93063cf93b",
+        "formatted_input_sha256": "c5364c70483a1287f0ca6fa57778c596a5302f068a9da277682b828a6445248f",
+        "settings_unchanged": true
+      },
+      {
+        "path": "validation/blue_moon/nacl_growth_rate_controls/growth_0p0005_A_per_fs/NaCl_master.inp",
+        "executed_input_sha256": "11a107d543a474d0c9a42e9194293b59e50d29c1f0614f3e3594d9f3f26e1777",
+        "formatted_input_sha256": "7253053a38787fd2fc897aa90ed1ae6b92c4aa0637826f317b493be2c1aed3dd",
+        "settings_unchanged": true
+      },
+      {
+        "path": "validation/blue_moon/nacl_growth_rate_controls/growth_0p001_A_per_fs/NaCl_fixed.inp",
+        "executed_input_sha256": "db77e4fc9c5e138f913126d08f722bf21a6b2659399f5d16bcf76b4fb72ce848",
+        "formatted_input_sha256": "ce54f52336f6b3b9bef4cf76c6246a9bcc19e2ecf7038c7d524d5635d613191c",
+        "settings_unchanged": true
+      },
+      {
+        "path": "validation/blue_moon/nacl_growth_rate_controls/growth_0p001_A_per_fs/NaCl_master.inp",
+        "executed_input_sha256": "ab30f36635d677ed122b68925a69c59b00d7737f5ce9b11bae46340feabc2672",
+        "formatted_input_sha256": "819751de0ecd1d68bcf7b23616dcf2df148c155876f85e852f774cc9e41b80d4",
+        "settings_unchanged": true
+      }
+    ],
+    "original_execution_records_preserved": true,
+    "focused_revalidation": {
+      "checked_SGT": "2026-10-08T12:16:59.442899+08:00",
+      "configuration": "Serial Debug, runtime and leak checks enabled",
+      "suite_exit_codes": {
+        "assert_moving_constraint": 0,
+        "assert_diagnostics": 0,
+        "assert_extended": 0,
+        "assert_restart_and_errors": 0,
+        "assert_edge_cases": 0,
+        "assert_mpi_ownership": 0
+      },
+      "binary_sha256": "c48986d93d99afdaefc49bfb3c239ef28372ab5414c555db574f03db101effa3",
+      "library_sha256": {
+        "libcp2k.so.2026.2": "154d077740ddf338937807011eb1df81a85f78194c526ec132e0356b7c5c60de"
+      },
+      "long_trajectories_rerun": false
+    }
+  }
 }

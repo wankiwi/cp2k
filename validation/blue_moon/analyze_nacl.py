@@ -12,7 +12,6 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
-
 COULOMB = 14.3996  # eV angstrom, as used in the supplied PDF benchmark.
 KB_EV_PER_K = 8.617333262145e-5
 

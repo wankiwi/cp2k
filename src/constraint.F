@@ -203,9 +203,10 @@ CONTAINS
             IF (gci%nvsite /= 0) THEN
                CALL shake_vsite_ext(gci, pos)
             END IF
-            IF (gci%joint_colvar_checks) &
+            IF (gci%joint_colvar_checks) THEN
                CALL check_local_colvars(local_molecules, molecule_set, particle_set, cell, group, &
                                         max_sigma, pos=pos)
+            END IF
             CALL restore_temporary_set(particle_set, local_particles, pos=pos, vel=vel)
          END IF
          CALL shake_ext_info(log_unit, ishake_ext, max_sigma)
@@ -328,9 +329,10 @@ CONTAINS
                CALL rattle_colv_ext(gci, particle_set, vel, dt, &
                                     irattle_ext, cell, imass, max_sigma)
             END IF
-            IF (gci%joint_colvar_checks) &
+            IF (gci%joint_colvar_checks) THEN
                CALL check_local_colvars(local_molecules, molecule_set, particle_set, cell, group, &
                                         max_sigma, vel=vel)
+            END IF
             CALL restore_temporary_set(particle_set, local_particles, vel=vel)
          END IF
          CALL rattle_ext_info(log_unit, irattle_ext, max_sigma)
@@ -483,9 +485,10 @@ CONTAINS
             IF (gci%nvsite /= 0) THEN
                CPABORT("Virtual Site Constraint/Restraint not implemented for SHAKE_ROLL!")
             END IF
-            IF (gci%joint_colvar_checks) &
+            IF (gci%joint_colvar_checks) THEN
                CALL check_local_colvars(local_molecules, molecule_set, particle_set, cell, group, &
                                         max_sigma, pos=pos)
+            END IF
             CALL restore_temporary_set(particle_set, local_particles, pos=pos, vel=vel)
          END IF
          CALL shake_ext_info(log_unit, ishake_ext, max_sigma)
@@ -632,9 +635,10 @@ CONTAINS
                CALL rattle_roll_colv_ext(gci, particle_set, vel, r_rattle, dt, &
                                          irattle_ext, veps, cell, imass, max_sigma)
             END IF
-            IF (gci%joint_colvar_checks) &
+            IF (gci%joint_colvar_checks) THEN
                CALL check_local_colvars(local_molecules, molecule_set, particle_set, cell, para_env, &
                                         max_sigma, vel=vel, rmat=r_rattle, veps=veps)
+            END IF
             CALL restore_temporary_set(particle_set, local_particles, vel=vel)
          END IF
          CALL rattle_ext_info(log_unit, irattle_ext, max_sigma)
@@ -645,6 +649,19 @@ CONTAINS
       CALL timestop(handle)
    END SUBROUTINE rattle_roll_control
 
+! **************************************************************************************************
+!> \brief ...
+!> \param local_molecules ...
+!> \param molecule_set ...
+!> \param particle_set ...
+!> \param cell ...
+!> \param group ...
+!> \param max_sigma ...
+!> \param pos ...
+!> \param vel ...
+!> \param rmat ...
+!> \param veps ...
+! **************************************************************************************************
    SUBROUTINE check_local_colvars(local_molecules, molecule_set, particle_set, cell, group, &
                                   max_sigma, pos, vel, rmat, veps)
       TYPE(distribution_1d_type), POINTER                :: local_molecules
@@ -941,8 +958,9 @@ CONTAINS
       do_ext_constraint = (gci%ntot /= 0)
       ! Intramolecular Constraints
       MOL: DO ikind = 1, nkind
-         IF (ASSOCIATED(molecule_kind_set(ikind)%colv_list)) &
+         IF (ASSOCIATED(molecule_kind_set(ikind)%colv_list)) THEN
             CALL shake_update_colv_low(molecule_kind_set(ikind)%colv_list, dt, motion_section)
+         END IF
       END DO MOL
       ! Intermolecular constraints
       IF (do_ext_constraint) THEN

@@ -27,12 +27,12 @@ MODULE blue_moon_types
       REAL(KIND=dp) :: previous_target = 0.0_dp, work = 0.0_dp, dwork = 0.0_dp
       REAL(KIND=dp) :: value = 0.0_dp, TARGET = 0.0_dp, lambda_shake = 0.0_dp
       REAL(KIND=dp) :: lambda_rattle = 0.0_dp, gkt = 0.0_dp, target_velocity = 0.0_dp
-   END TYPE
+   END TYPE blue_moon_entry_type
 
    TYPE blue_moon_state_type
       LOGICAL :: initialized = .FALSE., restored = .FALSE., work_pending = .FALSE.
       INTEGER :: step = -1
       REAL(KIND=dp) :: log_weight = 0.0_dp
       TYPE(blue_moon_entry_type), ALLOCATABLE :: entries(:)
-   END TYPE
+   END TYPE blue_moon_state_type
 END MODULE blue_moon_types

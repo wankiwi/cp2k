@@ -573,8 +573,9 @@ CONTAINS
                   CALL section_vals_val_get(collective_section, "TARGET", &
                                             r_val=cons_info%const_colv_target(ig), i_rep_section=ig, &
                                             unit_str=cons_info%const_colv_unit(ig))
-                  IF (LEN_TRIM(cons_info%const_colv_unit(ig)) == 0) &
+                  IF (LEN_TRIM(cons_info%const_colv_unit(ig)) == 0) THEN
                      cons_info%const_colv_unit(ig) = "internal_cp2k"
+                  END IF
                ELSE
                   cons_info%const_colv_target(ig) = -HUGE(0.0_dp)
                END IF
