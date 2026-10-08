@@ -169,7 +169,7 @@
   },
   "source_at_run": "master d597 + exact source-code.patch; implementation committed without changing bytes after freezing",
   "frozen_files_sha256": {
-    "README.md": "18c98944ea88d8c64fe0f2a44eaa774cb4c748eee253b3f35d4afcfa3a407b1e",
+    "README.md": "dece6fdac44c3079feeeea7e583e5a5ea6c440fb2d9083c093634d24026232a4",
     "analysis_validation.json": "250ef4d2af8256e846d76279a63138f27dbf60e928e6030285c6bcdc25fc426a",
     "reproduce_nacl.py": "39c230f98f36e72c9c44f6fbf11ac170e7a71660d305c307554b9b32192a7eea",
     "__pycache__/reproduce_nacl.cpython-311.pyc": "c0a86f646ec076de6224fce46789ef9dfcd5d65c80389d9b866d09fcabaaf301",
@@ -469,5 +469,6 @@
     "total": 55,
     "status": "PASS",
     "MPI_leak_detection": false
-  }
+  },
+  "velocity_initialization": "Input velocities are initialized to zero; the fixed solver projects the initial frame onto the imposed target rate before step 1."
 }

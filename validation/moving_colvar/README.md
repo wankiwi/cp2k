@@ -9,7 +9,7 @@ The model uses `METHOD FIST`, charges +1 and -1, zero Lennard-Jones `EPSILON` fo
 `CONN_FILE_FORMAT OFF`. Thus only Coulomb interactions are enabled. `EWALD_TYPE NONE` selects the
 direct-space electrostatic interaction in a 40 Å periodic XYZ cell; the pair cutoff is 20 Å.
 
-All cases use NVE, zero initial velocity, a 1 fs timestep and `SHAKE_TOLERANCE 1e-10`. The distance
+All cases use NVE, zero input velocities, a 1 fs timestep and `SHAKE_TOLERANCE 1e-10`. The distance
 target grows from 2.5 to 5 Å:
 
 | Growth (Å/fs) | Steps | Master force MAE (eV/Å) | Fixed force MAE (eV/Å) | Master final work error (eV) | Fixed final work error (eV) |
